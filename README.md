@@ -40,11 +40,11 @@ You can create a lightweight PRD directly within Cursor:
 
 With your PRD drafted (e.g., `MyFeature-PRD.md`), the next step is to generate a detailed, step-by-step implementation plan for your AI Developer.
 
-1.  Ensure you have `generate-tasks-from-prd.mdc` accessible.
+1.  Ensure you have `generate-tasks.mdc` accessible.
 2.  In Cursor's Agent chat, use the PRD to create tasks:
 
     ```
-    Now take @MyFeature-PRD.md and create tasks using @generate-tasks-from-prd.mdc
+    Now take @MyFeature-PRD.md and create tasks using @generate-tasks.mdc
     ```
     *(Note: Replace `@MyFeature-PRD.md` with the actual filename of the PRD you generated in step 1.)*
 
