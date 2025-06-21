@@ -93,7 +93,7 @@ If you'd like to see this in action, I demonstrated it on [Claire Vo's "How I AI
 ## 🗂️ Files in this Repository
 
 *   **`create-prd.mdc`**: Guides the AI in generating a Product Requirement Document for your feature.
-*   **`generate-tasks-from-prd.mdc`**: Takes a PRD markdown file as input and helps the AI break it down into a detailed, step-by-step implementation task list.
+*   **`generate-tasks.mdc`**: Takes a PRD markdown file as input and helps the AI break it down into a detailed, step-by-step implementation task list.
 *   **`process-task-list.mdc`**: Instructs the AI on how to process the generated task list, tackling one task at a time and waiting for your approval before proceeding. (This file also contains logic for the AI to mark tasks as complete).
 
 ## 🌟 Benefits
