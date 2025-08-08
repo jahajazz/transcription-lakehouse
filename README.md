@@ -108,6 +108,9 @@ If you'd like to see this in action, I demonstrated it on [Claire Vo's "How I AI
 ## 🛠️ How to Use
 
 1. **Clone or Download:** Get these `.md` files into your project or a central location where your AI tool can access them.
+   ```bash
+   git clone https://github.com/snarktank/ai-dev-tasks.git
+   ```
 2. **Follow the Workflow:** Systematically use the `.md` files in your AI assistant as described in the workflow above.
 3. **Adapt and Iterate:**
     * Feel free to modify the prompts within the `.md` files to better suit your specific needs or coding style.
