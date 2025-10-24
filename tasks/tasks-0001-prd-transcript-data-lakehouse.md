@@ -95,7 +95,7 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 1.7 Create configuration templates in `config/`: `aggregation_config.yaml`, `embedding_config.yaml`, `validation_rules.yaml`
   - [x] 1.8 Implement `src/lakehouse/config.py` to load and validate YAML configuration files with sensible defaults
 
-- [ ] 2.0 Data Ingestion and Normalization Layer
+- [x] 2.0 Data Ingestion and Normalization Layer
   - [x] 2.1 Implement `src/lakehouse/schemas.py` with PyArrow schemas for utterances, spans, beats, sections, and embeddings
   - [x] 2.2 Implement `src/lakehouse/ingestion/reader.py` to read JSON/JSONL transcript files with error handling
   - [x] 2.3 Implement `src/lakehouse/ingestion/validator.py` to validate input schema (required fields: episode_id, start, end, speaker, text)
