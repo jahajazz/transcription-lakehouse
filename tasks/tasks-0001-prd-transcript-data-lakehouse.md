@@ -96,14 +96,14 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 1.8 Implement `src/lakehouse/config.py` to load and validate YAML configuration files with sensible defaults
 
 - [ ] 2.0 Data Ingestion and Normalization Layer
-  - [ ] 2.1 Implement `src/lakehouse/schemas.py` with PyArrow schemas for utterances, spans, beats, sections, and embeddings
-  - [ ] 2.2 Implement `src/lakehouse/ingestion/reader.py` to read JSON/JSONL transcript files with error handling
-  - [ ] 2.3 Implement `src/lakehouse/ingestion/validator.py` to validate input schema (required fields: episode_id, start, end, speaker, text)
-  - [ ] 2.4 Implement `src/lakehouse/ingestion/normalizer.py` to generate deterministic `utterance_id` from episode_id + position + content hash
-  - [ ] 2.5 Implement `src/lakehouse/ingestion/writer.py` with Parquet writing utilities using PyArrow (compression, schema enforcement)
-  - [ ] 2.6 Create directory structure generator to set up versioned lakehouse layout (raw/, normalized/v1/, etc.)
-  - [ ] 2.7 Implement end-to-end ingestion pipeline: read → validate → normalize → write to Parquet
-  - [ ] 2.8 Add logging for skipped/malformed records with clear error messages and continue processing valid data
+  - [x] 2.1 Implement `src/lakehouse/schemas.py` with PyArrow schemas for utterances, spans, beats, sections, and embeddings
+  - [x] 2.2 Implement `src/lakehouse/ingestion/reader.py` to read JSON/JSONL transcript files with error handling
+  - [x] 2.3 Implement `src/lakehouse/ingestion/validator.py` to validate input schema (required fields: episode_id, start, end, speaker, text)
+  - [x] 2.4 Implement `src/lakehouse/ingestion/normalizer.py` to generate deterministic `utterance_id` from episode_id + position + content hash
+  - [x] 2.5 Implement `src/lakehouse/ingestion/writer.py` with Parquet writing utilities using PyArrow (compression, schema enforcement)
+  - [x] 2.6 Create directory structure generator to set up versioned lakehouse layout (raw/, normalized/v1/, etc.)
+  - [x] 2.7 Implement end-to-end ingestion pipeline: read → validate → normalize → write to Parquet
+  - [x] 2.8 Add logging for skipped/malformed records with clear error messages and continue processing valid data
 
 - [ ] 3.0 Hierarchical Aggregation (Spans, Beats, Sections)
   - [ ] 3.1 Implement `src/lakehouse/aggregation/base.py` with abstract base class for aggregation strategies
