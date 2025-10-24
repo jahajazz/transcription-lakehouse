@@ -1,0 +1,104 @@
+# Embedding Configuration
+# Controls vector embedding generation for spans and beats
+
+# Model Selection
+model:
+  # Primary embedding model provider
+  # Options: "local", "openai", "huggingface"
+  provider: "local"
+  
+  # Model name/identifier
+  # For local: sentence-transformers model name
+  # For OpenAI: model name (e.g., "text-embedding-3-small")
+  # For HuggingFace: model repo name
+  name: "all-MiniLM-L6-v2"
+  
+  # Device for local models: "cpu", "cuda", "mps"
+  device: "cpu"
+  
+  # Model cache directory (null for default)
+  cache_dir: null
+
+# Fallback Configuration
+fallback:
+  # Enable fallback to alternative provider if primary fails
+  enabled: true
+  
+  # Fallback provider (typically "openai" when primary is "local")
+  provider: "openai"
+  
+  # Fallback model name
+  model_name: "text-embedding-3-small"
+
+# OpenAI API Configuration (if using OpenAI provider)
+openai:
+  # API key (can also be set via OPENAI_API_KEY environment variable)
+  # SECURITY: Do not commit API keys to git! Use environment variables.
+  api_key: null  # Set via OPENAI_API_KEY env var
+  
+  # Organization ID (optional)
+  organization: null
+  
+  # API base URL (for custom endpoints)
+  api_base: null
+  
+  # Request timeout in seconds
+  timeout: 30
+  
+  # Max retries for failed requests
+  max_retries: 3
+
+# Generation Parameters
+generation:
+  # Batch size for embedding generation
+  batch_size: 32
+  
+  # Whether to normalize embeddings to unit length
+  normalize_embeddings: true
+  
+  # Maximum text length to embed (characters)
+  # Longer texts will be truncated
+  max_text_length: 8192
+  
+  # Whether to show progress bar during generation
+  show_progress: true
+  
+  # Number of workers for parallel processing (local models only)
+  num_workers: 1
+
+# Artifact Selection
+artifacts:
+  # Generate embeddings for spans
+  embed_spans: true
+  
+  # Generate embeddings for beats
+  embed_beats: true
+  
+  # Generate embeddings for sections
+  embed_sections: false
+  
+  # Generate embeddings for individual utterances
+  embed_utterances: false
+
+# Caching
+cache:
+  # Enable caching of embeddings to avoid recomputation
+  enabled: true
+  
+  # Cache directory (relative to lakehouse root)
+  cache_dir: "embeddings/cache"
+  
+  # Cache invalidation strategy: "content_hash", "always_refresh"
+  invalidation: "content_hash"
+
+# Quality Control
+quality:
+  # Check for NaN or Inf values in embeddings
+  check_validity: true
+  
+  # Minimum embedding dimension (for validation)
+  min_dimension: 128
+  
+  # Maximum embedding dimension (for validation)
+  max_dimension: 4096
+
