@@ -117,7 +117,7 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 3.9 Store all aggregation artifacts (spans, beats, sections) in versioned Parquet files with full metadata
   - [x] 3.10 Ensure all aggregations maintain referential integrity (utterance_ids in spans, span_ids in beats, beat_ids in sections)
 
-- [ ] 4.0 Vector Embeddings and ANN Indexing
+- [x] 4.0 Vector Embeddings and ANN Indexing
   - [x] 4.1 Implement `src/lakehouse/embeddings/models.py` with abstract model interface for embedding generation
   - [x] 4.2 In models module, create wrapper for local sentence-transformers model (default: all-MiniLM-L6-v2 or similar)
   - [x] 4.3 In models module, create wrapper for OpenAI embeddings API as fallback option
