@@ -1,0 +1,71 @@
+# Aggregation Configuration
+# Controls how utterances are aggregated into spans, beats, and sections
+
+# Span Generation (single-speaker contiguous segments)
+spans:
+  # Minimum duration in seconds for a span
+  min_duration: 1.0
+  
+  # Maximum silence gap in seconds to still consider utterances contiguous
+  max_silence_gap: 0.5
+  
+  # Whether to break spans on speaker changes (should always be true for single-speaker spans)
+  break_on_speaker_change: true
+
+# Beat Generation (semantic meaning units)
+beats:
+  # Similarity threshold for grouping spans into beats (0.0 - 1.0)
+  # Higher values = more strict boundaries, smaller beats
+  # Lower values = more permissive, larger beats
+  similarity_threshold: 0.7
+  
+  # Minimum number of spans per beat
+  min_spans_per_beat: 1
+  
+  # Maximum number of spans per beat (null for no limit)
+  max_spans_per_beat: null
+  
+  # Sliding window size for computing similarity
+  window_size: 3
+  
+  # Whether to use embedding-based similarity (requires embeddings)
+  # If false, uses simple heuristics (speaker changes, time gaps)
+  use_embeddings: true
+  
+  # Fallback method if embeddings not available
+  fallback_method: "heuristic"  # Options: "heuristic", "time_based"
+
+# Section Generation (5-12 minute logical blocks)
+sections:
+  # Target section duration in minutes
+  target_duration_minutes: 8.0
+  
+  # Minimum section duration in minutes
+  min_duration_minutes: 5.0
+  
+  # Maximum section duration in minutes
+  # Sections can exceed this if semantic boundaries require it
+  max_duration_minutes: 12.0
+  
+  # Whether to allow sections to exceed max_duration for semantic coherence
+  allow_semantic_overflow: true
+  
+  # Similarity threshold for section boundaries
+  # Lower than beat threshold to create larger groupings
+  boundary_similarity_threshold: 0.5
+  
+  # Whether to prefer time-based boundaries over semantic ones
+  prefer_time_boundaries: false
+
+# General settings
+general:
+  # Preserve all original metadata fields in aggregated artifacts
+  preserve_metadata: true
+  
+  # Validate referential integrity (e.g., all utterance_ids exist)
+  validate_references: true
+  
+  # Maximum text length to include in aggregated artifacts (characters)
+  # null for no limit
+  max_text_length: null
+

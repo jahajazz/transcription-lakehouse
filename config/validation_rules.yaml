@@ -1,0 +1,168 @@
+# Validation Rules Configuration
+# Defines data quality checks and validation thresholds
+
+# Schema Validation
+schemas:
+  # Enforce strict schema compliance for Parquet files
+  enforce_schemas: true
+  
+  # Required fields for each artifact type
+  required_fields:
+    utterance:
+      - utterance_id
+      - episode_id
+      - start
+      - end
+      - speaker
+      - text
+    
+    span:
+      - span_id
+      - episode_id
+      - speaker
+      - start_time
+      - end_time
+      - text
+      - utterance_ids
+    
+    beat:
+      - beat_id
+      - episode_id
+      - start_time
+      - end_time
+      - text
+      - span_ids
+    
+    section:
+      - section_id
+      - episode_id
+      - start_time
+      - end_time
+      - duration_minutes
+      - text
+      - beat_ids
+
+# Data Quality Checks
+quality_checks:
+  # Timestamp validation
+  timestamps:
+    # Check that timestamps are monotonically increasing
+    check_monotonic: true
+    
+    # Check that end > start for all time ranges
+    check_end_after_start: true
+    
+    # Check for negative timestamps
+    check_non_negative: true
+    
+    # Maximum allowed timestamp gap in seconds (null for no limit)
+    max_gap: null
+  
+  # Text validation
+  text:
+    # Check for empty text fields
+    check_non_empty: true
+    
+    # Minimum text length (characters)
+    min_length: 1
+    
+    # Maximum text length (characters, null for no limit)
+    max_length: null
+    
+    # Check for null or missing text
+    check_null: true
+  
+  # ID validation
+  ids:
+    # Check ID format validity
+    check_format: true
+    
+    # Check for duplicate IDs
+    check_duplicates: true
+    
+    # Check referential integrity (e.g., utterance_ids exist)
+    check_references: true
+  
+  # Numeric validation
+  numeric:
+    # Check for NaN values
+    check_nan: true
+    
+    # Check for Inf values
+    check_inf: true
+    
+    # Check for negative durations
+    check_non_negative_duration: true
+
+# Coverage Requirements
+coverage:
+  # Minimum percentage of utterances that must be assigned to spans
+  min_utterance_to_span_coverage: 95.0
+  
+  # Minimum percentage of spans that must be assigned to beats
+  min_span_to_beat_coverage: 90.0
+  
+  # Minimum percentage of episode duration covered by sections
+  min_section_duration_coverage: 90.0
+  
+  # Whether to fail validation if coverage thresholds not met
+  fail_on_low_coverage: false
+
+# Sanity Checks
+sanity_checks:
+  # Check that tables are not empty
+  check_non_empty_tables: true
+  
+  # Check for reasonable speaker counts per episode (null for no check)
+  max_speakers_per_episode: 10
+  
+  # Check for reasonable utterance counts per episode
+  min_utterances_per_episode: 1
+  max_utterances_per_episode: null
+  
+  # Check episode duration reasonableness (minutes)
+  min_episode_duration_minutes: 1.0
+  max_episode_duration_minutes: 300.0  # 5 hours
+  
+  # Check for reasonable aggregation ratios
+  max_span_to_utterance_ratio: 1.0  # At most 1 span per utterance
+  max_beat_to_span_ratio: 1.0  # At most 1 beat per span
+
+# Error Handling
+error_handling:
+  # Whether to fail on first error or collect all errors
+  fail_fast: false
+  
+  # Maximum number of errors to report (null for no limit)
+  max_errors_to_report: 100
+  
+  # Whether to include row-level details in error reports
+  include_row_details: true
+  
+  # Severity levels: "error", "warning", "info"
+  # Errors will fail validation, warnings will be logged but allow processing
+  severity_levels:
+    empty_text: "error"
+    missing_id: "error"
+    duplicate_id: "error"
+    timestamp_order: "warning"
+    low_coverage: "warning"
+    long_text: "info"
+
+# Reporting
+reporting:
+  # Generate validation report after each run
+  generate_report: true
+  
+  # Report format: "json", "text", "both"
+  report_format: "both"
+  
+  # Include statistics in report
+  include_statistics: true
+  
+  # Include sample errors in report
+  include_sample_errors: true
+  
+  # Number of sample errors to include per error type
+  sample_errors_per_type: 5
+

@@ -1,0 +1,2 @@
+"""Vector embedding generation module."""
+
