@@ -1,0 +1,11 @@
+{
+  "model_name": "all-MiniLM-L6-v2",
+  "model_version": "SentenceTransformerModel",
+  "embedding_dimension": 384,
+  "version": "v1",
+  "total_embeddings": 377,
+  "embeddings_by_type": {
+    "span": 210,
+    "beat": 167
+  }
+}

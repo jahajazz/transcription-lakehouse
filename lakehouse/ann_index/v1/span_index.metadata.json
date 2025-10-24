@@ -1,0 +1,8 @@
+{
+  "num_vectors": 210,
+  "dimension": 384,
+  "M": 32,
+  "efConstruction": 64,
+  "efSearch": 32,
+  "distance_metric": "l2"
+}

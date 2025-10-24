@@ -1,0 +1,25 @@
+{
+  "created_at": "2025-10-24T09:28:24.397240",
+  "lakehouse_path": "lakehouse",
+  "initial_version": "v1",
+  "structure_version": "1.0",
+  "directories": [
+    "raw",
+    "normalized",
+    "spans",
+    "beats",
+    "sections",
+    "embeddings",
+    "ann_index",
+    "catalogs",
+    "catalogs/validation_reports"
+  ],
+  "versioned_directories": [
+    "normalized",
+    "spans",
+    "beats",
+    "sections",
+    "embeddings",
+    "ann_index"
+  ]
+}

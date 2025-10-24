@@ -59,7 +59,8 @@ def version():
 def main():
     """Main entry point for the CLI."""
     # Import commands to register them
-    from lakehouse.cli.commands import ingest, materialize, validate, catalog
+    from lakehouse.cli.commands import ingest, materialize
+    # TODO: Import validate and catalog commands when implemented
     
     cli()
 
