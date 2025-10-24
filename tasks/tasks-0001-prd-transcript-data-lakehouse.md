@@ -42,9 +42,9 @@ The implementation will build a complete data lakehouse system from scratch usin
 - `src/lakehouse/indexing/incremental.py` - Incremental index update logic
 
 ### Catalogs and Validation
-- `src/lakehouse/catalogs/episodes.py` - Episode catalog generation
-- `src/lakehouse/catalogs/speakers.py` - Speaker catalog generation
-- `src/lakehouse/catalogs/schema_manifest.py` - Schema manifest generation
+- `src/lakehouse/catalogs/episodes.py` - Episode catalog generation with DuckDB queries
+- `src/lakehouse/catalogs/speakers.py` - Speaker catalog generation with statistics and rankings
+- `src/lakehouse/catalogs/schema_manifest.py` - Schema manifest generation and validation
 - `src/lakehouse/validation/checks.py` - Sanity checks and validation rules
 - `src/lakehouse/validation/reporter.py` - Validation report generation
 
@@ -52,7 +52,7 @@ The implementation will build a complete data lakehouse system from scratch usin
 - `src/lakehouse/cli/__init__.py` - CLI entry point
 - `src/lakehouse/cli/commands/ingest.py` - Ingest command implementation
 - `src/lakehouse/cli/commands/materialize.py` - Materialize command implementation
-- `src/lakehouse/cli/commands/validate.py` - Validate command implementation
+- `src/lakehouse/cli/commands/validate.py` - Validate command implementation with data quality checks
 - `src/lakehouse/cli/commands/catalog.py` - Catalog command implementation
 
 ### Configuration Files
@@ -129,15 +129,15 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 4.9 Implement `src/lakehouse/indexing/incremental.py` for incremental index updates when new episodes are added
   - [x] 4.10 Export FAISS indices with metadata JSON files (index_config.json) for reloading
 
-- [ ] 5.0 CLI Interface and Commands
+- [x] 5.0 CLI Interface and Commands
   - [x] 5.1 Set up Click/Typer CLI framework in `src/lakehouse/cli/__init__.py` with main entry point
   - [x] 5.2 Implement `src/lakehouse/cli/commands/ingest.py` with `ingest` command to run end-to-end ingestion on a directory
   - [x] 5.3 Add `--dry-run` flag to ingest command for validation without writing outputs
   - [x] 5.4 Add `--incremental` flag to ingest command to process only new episodes not in catalog
   - [x] 5.5 Implement `src/lakehouse/cli/commands/materialize.py` with `materialize` command to generate derived artifacts (spans, beats, sections, embeddings, indices)
   - [x] 5.6 Add artifact selection flags to materialize command (--spans-only, --beats-only, --embeddings, --all)
-  - [ ] 5.7 Implement `src/lakehouse/cli/commands/validate.py` with `validate` command to check data quality and report statistics
-  - [ ] 5.8 Implement `src/lakehouse/cli/commands/catalog.py` with `catalog` command to display episode and speaker summaries using DuckDB queries
+  - [x] 5.7 Implement `src/lakehouse/cli/commands/validate.py` with `validate` command to check data quality and report statistics
+  - [x] 5.8 Implement `src/lakehouse/cli/commands/catalog.py` with `catalog` command to display episode and speaker summaries using DuckDB queries
   - [x] 5.9 Add common CLI options: --lakehouse-path, --config-dir, --log-level, --version
   - [x] 5.10 Implement rich console output with progress bars and formatted tables for better UX
 
