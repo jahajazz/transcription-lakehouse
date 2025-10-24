@@ -118,16 +118,16 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 3.10 Ensure all aggregations maintain referential integrity (utterance_ids in spans, span_ids in beats, beat_ids in sections)
 
 - [ ] 4.0 Vector Embeddings and ANN Indexing
-  - [ ] 4.1 Implement `src/lakehouse/embeddings/models.py` with abstract model interface for embedding generation
-  - [ ] 4.2 In models module, create wrapper for local sentence-transformers model (default: all-MiniLM-L6-v2 or similar)
-  - [ ] 4.3 In models module, create wrapper for OpenAI embeddings API as fallback option
-  - [ ] 4.4 Implement `src/lakehouse/embeddings/generator.py` to generate embeddings for spans and beats with batch processing
-  - [ ] 4.5 Add configuration loading from `embedding_config.yaml` (model selection, API keys, batch sizes)
-  - [ ] 4.6 Implement `src/lakehouse/embeddings/storage.py` to store embeddings in Parquet with artifact_id, artifact_type, embedding vector, model metadata
-  - [ ] 4.7 Implement `src/lakehouse/indexing/faiss_builder.py` to build FAISS HNSW indices from span and beat embeddings
-  - [ ] 4.8 Add FAISS index configuration options (M parameter, efConstruction, distance metric) to config
-  - [ ] 4.9 Implement `src/lakehouse/indexing/incremental.py` for incremental index updates when new episodes are added
-  - [ ] 4.10 Export FAISS indices with metadata JSON files (index_config.json) for reloading
+  - [x] 4.1 Implement `src/lakehouse/embeddings/models.py` with abstract model interface for embedding generation
+  - [x] 4.2 In models module, create wrapper for local sentence-transformers model (default: all-MiniLM-L6-v2 or similar)
+  - [x] 4.3 In models module, create wrapper for OpenAI embeddings API as fallback option
+  - [x] 4.4 Implement `src/lakehouse/embeddings/generator.py` to generate embeddings for spans and beats with batch processing
+  - [x] 4.5 Add configuration loading from `embedding_config.yaml` (model selection, API keys, batch sizes)
+  - [x] 4.6 Implement `src/lakehouse/embeddings/storage.py` to store embeddings in Parquet with artifact_id, artifact_type, embedding vector, model metadata
+  - [x] 4.7 Implement `src/lakehouse/indexing/faiss_builder.py` to build FAISS HNSW indices from span and beat embeddings
+  - [x] 4.8 Add FAISS index configuration options (M parameter, efConstruction, distance metric) to config
+  - [x] 4.9 Implement `src/lakehouse/indexing/incremental.py` for incremental index updates when new episodes are added
+  - [x] 4.10 Export FAISS indices with metadata JSON files (index_config.json) for reloading
 
 - [ ] 5.0 CLI Interface and Commands
   - [ ] 5.1 Set up Click/Typer CLI framework in `src/lakehouse/cli/__init__.py` with main entry point
