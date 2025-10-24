@@ -23,7 +23,7 @@ from lakehouse.indexing.faiss_builder import build_and_save_index
 from lakehouse.config import load_config
 
 
-console = Console()
+console = Console(legacy_windows=False)
 
 
 @cli.command()
@@ -126,35 +126,35 @@ def materialize(ctx, version, spans_only, beats_only, sections_only, embeddings_
             console.print("[bold]Step 1: Generating Spans[/bold]")
             spans = _generate_spans(lakehouse_path, version, agg_config)
             results['spans'] = len(spans) if spans else 0
-            console.print(f"[green]✓ Generated {results['spans']} spans[/green]\n")
+            console.print(f"[green][OK] Generated {results['spans']} spans[/green]\n")
         
         # Step 2: Generate beats
         if tasks_to_run['beats']:
             console.print("[bold]Step 2: Generating Beats[/bold]")
             beats = _generate_beats(lakehouse_path, version, agg_config)
             results['beats'] = len(beats) if beats else 0
-            console.print(f"[green]✓ Generated {results['beats']} beats[/green]\n")
+            console.print(f"[green][OK] Generated {results['beats']} beats[/green]\n")
         
         # Step 3: Generate sections
         if tasks_to_run['sections']:
             console.print("[bold]Step 3: Generating Sections[/bold]")
             sections = _generate_sections(lakehouse_path, version, agg_config)
             results['sections'] = len(sections) if sections else 0
-            console.print(f"[green]✓ Generated {results['sections']} sections[/green]\n")
+            console.print(f"[green][OK] Generated {results['sections']} sections[/green]\n")
         
         # Step 4: Generate embeddings
         if tasks_to_run['embeddings']:
             console.print("[bold]Step 4: Generating Embeddings[/bold]")
             emb_count = _generate_embeddings(lakehouse_path, version, emb_config)
             results['embeddings'] = emb_count
-            console.print(f"[green]✓ Generated {emb_count} embeddings[/green]\n")
+            console.print(f"[green][OK] Generated {emb_count} embeddings[/green]\n")
         
         # Step 5: Build FAISS indices
         if tasks_to_run['indices']:
             console.print("[bold]Step 5: Building FAISS Indices[/bold]")
             index_count = _build_indices(lakehouse_path, version, emb_config)
             results['indices'] = index_count
-            console.print(f"[green]✓ Built {index_count} FAISS indices[/green]\n")
+            console.print(f"[green][OK] Built {index_count} FAISS indices[/green]\n")
         
         # Display summary
         _display_summary(results)
@@ -349,5 +349,5 @@ def _display_summary(results):
     
     console.print("\n")
     console.print(table)
-    console.print("\n[bold green]✓ Materialization complete![/bold green]")
+    console.print("\n[bold green][OK] Materialization complete![/bold green]")
 

@@ -16,7 +16,7 @@ from lakehouse.ingestion.pipeline import IngestionPipeline
 from lakehouse.structure import get_or_create_lakehouse
 
 
-console = Console()
+console = Console(legacy_windows=False)
 
 
 @cli.command()
@@ -81,7 +81,7 @@ def ingest(ctx, input_path, pattern, version, dry_run, incremental, skip_invalid
     # Initialize or get lakehouse structure
     if not dry_run:
         structure = get_or_create_lakehouse(lakehouse_path, version=version)
-        console.print(f"[green]✓[/green] Lakehouse initialized at {lakehouse_path}\n")
+        console.print(f"[green][OK][/green] Lakehouse initialized at {lakehouse_path}\n")
     else:
         lakehouse_path = None  # Don't write anything in dry run
     
@@ -179,7 +179,7 @@ def _dry_run_validation(files, skip_invalid):
         console.print(f"\n[yellow]Note: {total_invalid} invalid utterances detected[/yellow]")
     
     if len(failed_files) == 0 and total_invalid == 0:
-        console.print("\n[bold green]✓ All files validated successfully![/bold green]")
+        console.print("\n[bold green][OK] All files validated successfully![/bold green]")
 
 
 def _run_ingestion(files, lakehouse_path, version, skip_invalid, incremental):
@@ -244,7 +244,7 @@ def _run_ingestion(files, lakehouse_path, version, skip_invalid, incremental):
         console.print(f"\n[yellow]Note: {total_invalid} invalid utterances were skipped[/yellow]")
     
     if total_episodes > 0:
-        console.print(f"\n[bold green]✓ Successfully ingested {total_episodes} episode(s)![/bold green]")
+        console.print(f"\n[bold green][OK] Successfully ingested {total_episodes} episode(s)![/bold green]")
         console.print(f"[green]Data written to: {lakehouse_path}/normalized/{version}/[/green]")
 
 

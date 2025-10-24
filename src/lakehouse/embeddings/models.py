@@ -125,10 +125,13 @@ class SentenceTransformerModel(EmbeddingModel):
             
             logger.info(f"Loading sentence-transformers model: {self.model_name}")
             
+            # Filter out config parameters that SentenceTransformer doesn't accept
+            st_config = {k: v for k, v in self.config.items() if k not in ['api_key', 'fallback_model']}
+            
             self._model = SentenceTransformer(
                 self.model_name,
                 device=self.device,
-                **self.config,
+                **st_config,
             )
             
             # Get embedding dimension
