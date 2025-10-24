@@ -106,16 +106,16 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 2.8 Add logging for skipped/malformed records with clear error messages and continue processing valid data
 
 - [ ] 3.0 Hierarchical Aggregation (Spans, Beats, Sections)
-  - [ ] 3.1 Implement `src/lakehouse/aggregation/base.py` with abstract base class for aggregation strategies
-  - [ ] 3.2 Implement `src/lakehouse/aggregation/spans.py` to consolidate single-speaker contiguous utterances with stable `span_id`
-  - [ ] 3.3 In spans module, maintain references to constituent `utterance_ids` and compute duration/timestamps
-  - [ ] 3.4 Implement `src/lakehouse/aggregation/beats.py` with embedding-based semantic similarity for beat boundaries
-  - [ ] 3.5 In beats module, use configurable similarity threshold (default 0.7 cosine similarity) from `aggregation_config.yaml`
-  - [ ] 3.6 Generate stable `beat_id` from content hash + position + parent span IDs
-  - [ ] 3.7 Implement `src/lakehouse/aggregation/sections.py` to create 5-12 minute logical blocks using time and semantic boundaries
-  - [ ] 3.8 Generate stable `section_id` from content hash + position + parent beat IDs
-  - [ ] 3.9 Store all aggregation artifacts (spans, beats, sections) in versioned Parquet files with full metadata
-  - [ ] 3.10 Ensure all aggregations maintain referential integrity (utterance_ids in spans, span_ids in beats, beat_ids in sections)
+  - [x] 3.1 Implement `src/lakehouse/aggregation/base.py` with abstract base class for aggregation strategies
+  - [x] 3.2 Implement `src/lakehouse/aggregation/spans.py` to consolidate single-speaker contiguous utterances with stable `span_id`
+  - [x] 3.3 In spans module, maintain references to constituent `utterance_ids` and compute duration/timestamps
+  - [x] 3.4 Implement `src/lakehouse/aggregation/beats.py` with embedding-based semantic similarity for beat boundaries
+  - [x] 3.5 In beats module, use configurable similarity threshold (default 0.7 cosine similarity) from `aggregation_config.yaml`
+  - [x] 3.6 Generate stable `beat_id` from content hash + position + parent span IDs
+  - [x] 3.7 Implement `src/lakehouse/aggregation/sections.py` to create 5-12 minute logical blocks using time and semantic boundaries
+  - [x] 3.8 Generate stable `section_id` from content hash + position + parent beat IDs
+  - [x] 3.9 Store all aggregation artifacts (spans, beats, sections) in versioned Parquet files with full metadata
+  - [x] 3.10 Ensure all aggregations maintain referential integrity (utterance_ids in spans, span_ids in beats, beat_ids in sections)
 
 - [ ] 4.0 Vector Embeddings and ANN Indexing
   - [ ] 4.1 Implement `src/lakehouse/embeddings/models.py` with abstract model interface for embedding generation
