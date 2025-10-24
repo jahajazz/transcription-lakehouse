@@ -130,16 +130,16 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 4.10 Export FAISS indices with metadata JSON files (index_config.json) for reloading
 
 - [ ] 5.0 CLI Interface and Commands
-  - [ ] 5.1 Set up Click/Typer CLI framework in `src/lakehouse/cli/__init__.py` with main entry point
-  - [ ] 5.2 Implement `src/lakehouse/cli/commands/ingest.py` with `ingest` command to run end-to-end ingestion on a directory
-  - [ ] 5.3 Add `--dry-run` flag to ingest command for validation without writing outputs
-  - [ ] 5.4 Add `--incremental` flag to ingest command to process only new episodes not in catalog
-  - [ ] 5.5 Implement `src/lakehouse/cli/commands/materialize.py` with `materialize` command to generate derived artifacts (spans, beats, sections, embeddings, indices)
-  - [ ] 5.6 Add artifact selection flags to materialize command (--spans-only, --beats-only, --embeddings, --all)
+  - [x] 5.1 Set up Click/Typer CLI framework in `src/lakehouse/cli/__init__.py` with main entry point
+  - [x] 5.2 Implement `src/lakehouse/cli/commands/ingest.py` with `ingest` command to run end-to-end ingestion on a directory
+  - [x] 5.3 Add `--dry-run` flag to ingest command for validation without writing outputs
+  - [x] 5.4 Add `--incremental` flag to ingest command to process only new episodes not in catalog
+  - [x] 5.5 Implement `src/lakehouse/cli/commands/materialize.py` with `materialize` command to generate derived artifacts (spans, beats, sections, embeddings, indices)
+  - [x] 5.6 Add artifact selection flags to materialize command (--spans-only, --beats-only, --embeddings, --all)
   - [ ] 5.7 Implement `src/lakehouse/cli/commands/validate.py` with `validate` command to check data quality and report statistics
   - [ ] 5.8 Implement `src/lakehouse/cli/commands/catalog.py` with `catalog` command to display episode and speaker summaries using DuckDB queries
-  - [ ] 5.9 Add common CLI options: --lakehouse-path, --config-dir, --log-level, --version
-  - [ ] 5.10 Implement rich console output with progress bars and formatted tables for better UX
+  - [x] 5.9 Add common CLI options: --lakehouse-path, --config-dir, --log-level, --version
+  - [x] 5.10 Implement rich console output with progress bars and formatted tables for better UX
 
 - [ ] 6.0 Validation, Catalogs, and Reporting
   - [ ] 6.1 Implement `src/lakehouse/validation/checks.py` with sanity check functions (non-empty tables, monotonic timestamps, valid ID references)
