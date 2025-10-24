@@ -105,7 +105,7 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 2.7 Implement end-to-end ingestion pipeline: read → validate → normalize → write to Parquet
   - [x] 2.8 Add logging for skipped/malformed records with clear error messages and continue processing valid data
 
-- [ ] 3.0 Hierarchical Aggregation (Spans, Beats, Sections)
+- [x] 3.0 Hierarchical Aggregation (Spans, Beats, Sections)
   - [x] 3.1 Implement `src/lakehouse/aggregation/base.py` with abstract base class for aggregation strategies
   - [x] 3.2 Implement `src/lakehouse/aggregation/spans.py` to consolidate single-speaker contiguous utterances with stable `span_id`
   - [x] 3.3 In spans module, maintain references to constituent `utterance_ids` and compute duration/timestamps
