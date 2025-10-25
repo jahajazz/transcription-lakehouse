@@ -37,7 +37,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/metrics/__init__.py` - Metrics submodule initialization
 - ✅ `src/lakehouse/quality/metrics/coverage.py` - Category A: Coverage & Count metrics
 - ✅ `src/lakehouse/quality/metrics/distribution.py` - Category B: Length & Distribution metrics
-- `src/lakehouse/quality/metrics/integrity.py` - Category C: Ordering & Integrity metrics
+- ✅ `src/lakehouse/quality/metrics/integrity.py` - Category C: Ordering & Integrity metrics
 - `src/lakehouse/quality/metrics/balance.py` - Category D: Speaker & Series Balance metrics
 - `src/lakehouse/quality/metrics/text_quality.py` - Category E: Text Quality Proxy metrics
 - `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
@@ -84,11 +84,11 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 2.2.2 Implement `calculate_length_compliance()` for % within target bounds (spans: 20-120s, beats: 60-180s)
     - [x] 2.2.3 Implement `generate_histogram_bins()` with sensible bin ranges for spans and beats
     - [x] 2.2.4 Implement `validate_length_thresholds()` to check compliance against thresholds
-  - [ ] 2.3 Create `src/lakehouse/quality/metrics/integrity.py` implementing FR-14, FR-15, FR-16, FR-17:
-    - [ ] 2.3.1 Implement `check_timestamp_monotonicity()` for episode-level and speaker-stream ordering
-    - [ ] 2.3.2 Implement `detect_integrity_violations()` for negative/zero durations and missing fields
-    - [ ] 2.3.3 Implement `detect_duplicates()` for exact (normalized text match) and near-duplicates (fuzzy match using rapidfuzz)
-    - [ ] 2.3.4 Implement `validate_integrity_thresholds()` to check violations against thresholds
+  - [x] 2.3 Create `src/lakehouse/quality/metrics/integrity.py` implementing FR-14, FR-15, FR-16, FR-17:
+    - [x] 2.3.1 Implement `check_timestamp_monotonicity()` for episode-level and speaker-stream ordering
+    - [x] 2.3.2 Implement `detect_integrity_violations()` for negative/zero durations and missing fields
+    - [x] 2.3.3 Implement `detect_duplicates()` for exact (normalized text match) and near-duplicates (fuzzy match using rapidfuzz)
+    - [x] 2.3.4 Implement `validate_integrity_thresholds()` to check violations against thresholds
   - [ ] 2.4 Create `src/lakehouse/quality/metrics/balance.py` implementing FR-18, FR-19:
     - [ ] 2.4.1 Implement `calculate_speaker_distribution()` for counts, percentages, avg duration per speaker
     - [ ] 2.4.2 Implement `calculate_series_balance()` for per-series statistics (if series metadata available)

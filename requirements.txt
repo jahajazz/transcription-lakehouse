@@ -19,4 +19,5 @@ pytest-cov>=4.1.0
 # Additional utilities
 rich>=13.7.0  # For beautiful CLI output with progress bars and tables
 tqdm>=4.66.0  # For progress tracking
+rapidfuzz>=3.0.0  # For fuzzy string matching in duplicate detection
 
