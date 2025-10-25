@@ -73,7 +73,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
   - [x] 1.6 Create `src/lakehouse/quality/assessor.py` with `QualityAssessor` class skeleton and data loading logic
   - [x] 1.7 Define shared data structures: `MetricsBundle`, `AssessmentResult`, `RAGStatus` enum
 
-- [ ] 2.0 Data Metrics Implementation (Categories A-E)
+- [x] 2.0 Data Metrics Implementation (Categories A-E)
   - [x] 2.1 Create `src/lakehouse/quality/metrics/coverage.py` implementing FR-7, FR-8, FR-9:
     - [x] 2.1.1 Implement `calculate_episode_coverage()` for total duration, span/beat coverage %
     - [x] 2.1.2 Implement `detect_gaps_and_overlaps()` to find timeline gaps and overlaps
