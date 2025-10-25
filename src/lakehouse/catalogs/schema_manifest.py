@@ -358,3 +358,4 @@ def generate_schema_manifest(
     
     saved_files = manifest.save_manifest(manifest_df, format=save_format)
     return manifest_df, saved_files
+

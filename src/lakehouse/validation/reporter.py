@@ -150,8 +150,11 @@ class ValidationReporter:
             errors = len(report.get_errors())
             warnings = len(report.get_warnings())
             
+            # Calculate coverage percentages
+            pass_pct = (passed_checks / len(report.checks) * 100) if len(report.checks) > 0 else 0
+            
             lines.append(f"  Total Checks: {len(report.checks)}")
-            lines.append(f"  Passed: {passed_checks}")
+            lines.append(f"  Passed: {passed_checks} ({pass_pct:.1f}%)")
             lines.append(f"  Failed: {failed_checks}")
             lines.append(f"  Errors: {errors}")
             lines.append(f"  Warnings: {warnings}")
@@ -169,11 +172,14 @@ class ValidationReporter:
             total_errors += errors
             total_warnings += warnings
         
+        # Calculate overall coverage
+        overall_pass_pct = (total_passed / total_checks * 100) if total_checks > 0 else 0
+        
         lines.append("=" * 60)
         lines.append("OVERALL SUMMARY")
         lines.append("=" * 60)
         lines.append(f"Total Checks: {total_checks}")
-        lines.append(f"Passed: {total_passed}")
+        lines.append(f"Passed: {total_passed} ({overall_pass_pct:.1f}%)")
         lines.append(f"Failed: {total_failed}")
         lines.append(f"Errors: {total_errors}")
         lines.append(f"Warnings: {total_warnings}")
@@ -209,6 +215,11 @@ class ValidationReporter:
             errors = len(report.get_errors())
             warnings = len(report.get_warnings())
             
+            # Calculate coverage percentages
+            pass_percentage = (passed_checks / len(report.checks) * 100) if len(report.checks) > 0 else 0
+            error_percentage = (errors / len(report.checks) * 100) if len(report.checks) > 0 else 0
+            warning_percentage = (warnings / len(report.checks) * 100) if len(report.checks) > 0 else 0
+            
             artifact_summary = {
                 "artifact_type": report.artifact_type,
                 "version": report.version,
@@ -218,6 +229,9 @@ class ValidationReporter:
                 "failed": failed_checks,
                 "errors": errors,
                 "warnings": warnings,
+                "pass_percentage": round(pass_percentage, 2),
+                "error_percentage": round(error_percentage, 2),
+                "warning_percentage": round(warning_percentage, 2),
                 "status": "pass" if errors == 0 else "fail",
                 "statistics": report.statistics,
                 "checks": [check.to_dict() for check in report.checks]
@@ -231,12 +245,20 @@ class ValidationReporter:
             total_errors += errors
             total_warnings += warnings
         
+        # Calculate overall coverage percentages
+        overall_pass_pct = (total_passed / total_checks * 100) if total_checks > 0 else 0
+        overall_error_pct = (total_errors / total_checks * 100) if total_checks > 0 else 0
+        overall_warning_pct = (total_warnings / total_checks * 100) if total_checks > 0 else 0
+        
         summary["overall"] = {
             "total_checks": total_checks,
             "passed": total_passed,
             "failed": total_failed,
             "errors": total_errors,
             "warnings": total_warnings,
+            "pass_percentage": round(overall_pass_pct, 2),
+            "error_percentage": round(overall_error_pct, 2),
+            "warning_percentage": round(overall_warning_pct, 2),
             "status": "pass" if total_errors == 0 else "fail"
         }
         
@@ -460,3 +482,4 @@ class ValidationReporter:
             console.print("\n[bold green]✓ All validations passed![/bold green]")
         else:
             console.print(f"\n[bold red]✗ {total_errors} validation errors found[/bold red]")
+

@@ -141,31 +141,31 @@ The implementation will build a complete data lakehouse system from scratch usin
   - [x] 5.9 Add common CLI options: --lakehouse-path, --config-dir, --log-level, --version
   - [x] 5.10 Implement rich console output with progress bars and formatted tables for better UX
 
-- [ ] 6.0 Validation, Catalogs, and Reporting
-  - [ ] 6.1 Implement `src/lakehouse/validation/checks.py` with sanity check functions (non-empty tables, monotonic timestamps, valid ID references)
-  - [ ] 6.2 Add schema enforcement at Parquet write time using PyArrow schema validation
-  - [ ] 6.3 Implement `src/lakehouse/validation/reporter.py` to generate validation reports with row counts, coverage percentages, failure descriptions
-  - [ ] 6.4 Output validation reports as both JSON and human-readable text formats
-  - [ ] 6.5 Implement `src/lakehouse/catalogs/episodes.py` to generate episode catalog with episode_id, title, date, duration, speaker_list, file_path
-  - [ ] 6.6 Implement `src/lakehouse/catalogs/speakers.py` to generate speaker catalog with speaker_name, episode_count, total_utterances, total_duration using DuckDB aggregations
-  - [ ] 6.7 Implement `src/lakehouse/catalogs/schema_manifest.py` to generate schema manifest with artifact types, schemas, column descriptions, version info
-  - [ ] 6.8 Store catalogs as both Parquet (for querying) and JSON (for human readability) in `catalogs/` directory
-  - [ ] 6.9 Store validation reports with timestamps in `catalogs/validation_reports/{run_timestamp}.json`
-  - [ ] 6.10 Add catalog regeneration logic to update catalogs incrementally when new episodes are added
+- [x] 6.0 Validation, Catalogs, and Reporting
+  - [x] 6.1 Implement `src/lakehouse/validation/checks.py` with sanity check functions (non-empty tables, monotonic timestamps, valid ID references)
+  - [x] 6.2 Add schema enforcement at Parquet write time using PyArrow schema validation
+  - [x] 6.3 Implement `src/lakehouse/validation/reporter.py` to generate validation reports with row counts, coverage percentages, failure descriptions
+  - [x] 6.4 Output validation reports as both JSON and human-readable text formats
+  - [x] 6.5 Implement `src/lakehouse/catalogs/episodes.py` to generate episode catalog with episode_id, title, date, duration, speaker_list, file_path
+  - [x] 6.6 Implement `src/lakehouse/catalogs/speakers.py` to generate speaker catalog with speaker_name, episode_count, total_utterances, total_duration using DuckDB aggregations
+  - [x] 6.7 Implement `src/lakehouse/catalogs/schema_manifest.py` to generate schema manifest with artifact types, schemas, column descriptions, version info
+  - [x] 6.8 Store catalogs as both Parquet (for querying) and JSON (for human readability) in `catalogs/` directory
+  - [x] 6.9 Store validation reports with timestamps in `catalogs/validation_reports/{run_timestamp}.json`
+  - [x] 6.10 Add catalog regeneration logic to update catalogs incrementally when new episodes are added
 
-- [ ] 7.0 Testing and Documentation
-  - [ ] 7.1 Create `tests/fixtures/sample_transcript.jsonl` with realistic test data (5-10 utterances from different speakers)
-  - [ ] 7.2 Implement `tests/test_ids.py` with unit tests for ID generation determinism (same input → same ID, different input → different ID)
-  - [ ] 7.3 Implement `tests/test_ingestion.py` with tests for reader, validator, normalizer, and writer modules
-  - [ ] 7.4 Implement `tests/test_aggregation.py` with tests for span, beat, and section generation logic
-  - [ ] 7.5 Implement `tests/test_embeddings.py` with tests for embedding generation (mock model to avoid API calls)
-  - [ ] 7.6 Implement `tests/test_validation.py` with tests for sanity checks and validation report generation
-  - [ ] 7.7 Implement `tests/integration/test_pipeline.py` with end-to-end pipeline test using sample transcript
-  - [ ] 7.8 Set up pytest configuration in `pyproject.toml` or `pytest.ini` with coverage reporting
-  - [ ] 7.9 Create comprehensive `README.md` with installation instructions, usage examples, CLI command reference, and architecture overview
-  - [ ] 7.10 Create example configuration files with inline comments explaining all parameters and sensible defaults
-  - [ ] 7.11 Add docstrings to all public functions and classes following Google or NumPy docstring conventions
-  - [ ] 7.12 Create `CONTRIBUTING.md` with development setup instructions and contribution guidelines
+- [x] 7.0 Testing and Documentation
+  - [x] 7.1 Create `tests/fixtures/sample_transcript.jsonl` with realistic test data (5-10 utterances from different speakers)
+  - [x] 7.2 Implement `tests/test_ids.py` with unit tests for ID generation determinism (same input → same ID, different input → different ID)
+  - [x] 7.3 Implement `tests/test_ingestion.py` with tests for reader, validator, normalizer, and writer modules
+  - [x] 7.4 Implement `tests/test_aggregation.py` with tests for span, beat, and section generation logic
+  - [x] 7.5 Implement `tests/test_embeddings.py` with tests for embedding generation (mock model to avoid API calls)
+  - [x] 7.6 Implement `tests/test_validation.py` with tests for sanity checks and validation report generation
+  - [x] 7.7 Implement `tests/integration/test_pipeline.py` with end-to-end pipeline test using sample transcript
+  - [x] 7.8 Set up pytest configuration in `pyproject.toml` or `pytest.ini` with coverage reporting
+  - [x] 7.9 Create comprehensive `README.md` with installation instructions, usage examples, CLI command reference, and architecture overview
+  - [x] 7.10 Create example configuration files with inline comments explaining all parameters and sensible defaults
+  - [x] 7.11 Add docstrings to all public functions and classes following Google or NumPy docstring conventions
+  - [x] 7.12 Create `CONTRIBUTING.md` with development setup instructions and contribution guidelines
 
 ---
 

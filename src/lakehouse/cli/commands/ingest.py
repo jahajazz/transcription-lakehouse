@@ -11,9 +11,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.table import Table
 
 from lakehouse.cli import cli, common_options
-from lakehouse.logger import configure_logging
+from lakehouse.logger import configure_logging, get_default_logger
 from lakehouse.ingestion.pipeline import IngestionPipeline
 from lakehouse.structure import get_or_create_lakehouse
+from lakehouse.catalogs.episodes import generate_episode_catalog
+from lakehouse.catalogs.speakers import generate_speaker_catalog
 
 
 console = Console(legacy_windows=False)
@@ -47,8 +49,13 @@ console = Console(legacy_windows=False)
     default=True,
     help='Skip invalid utterances vs fail on first error (default: skip)',
 )
+@click.option(
+    '--update-catalog',
+    is_flag=True,
+    help='Regenerate episode and speaker catalogs after ingestion',
+)
 @click.pass_context
-def ingest(ctx, input_path, pattern, version, dry_run, incremental, skip_invalid, lakehouse_path, config_dir, log_level):
+def ingest(ctx, input_path, pattern, version, dry_run, incremental, skip_invalid, update_catalog, lakehouse_path, config_dir, log_level):
     """
     Ingest transcript files into the lakehouse.
     
@@ -107,7 +114,25 @@ def ingest(ctx, input_path, pattern, version, dry_run, incremental, skip_invalid
         _dry_run_validation(files, skip_invalid)
     else:
         # Full ingestion
-        _run_ingestion(files, lakehouse_path, version, skip_invalid, incremental)
+        total_episodes, total_failed = _run_ingestion(files, lakehouse_path, version, skip_invalid, incremental)
+        
+        # Regenerate catalogs if requested and ingestion was successful
+        if update_catalog and total_episodes > 0:
+            console.print("\n[cyan]Regenerating catalogs...[/cyan]")
+            logger = get_default_logger()
+            try:
+                # Generate episode catalog
+                episode_df, episode_files = generate_episode_catalog(lakehouse_path, version, save_format="both")
+                if not episode_df.empty:
+                    console.print(f"[green]✓ Updated episode catalog ({len(episode_df)} episodes)[/green]")
+                
+                # Generate speaker catalog
+                speaker_df, speaker_files = generate_speaker_catalog(lakehouse_path, version, save_format="both")
+                if not speaker_df.empty:
+                    console.print(f"[green]✓ Updated speaker catalog ({len(speaker_df)} speakers)[/green]")
+            except Exception as e:
+                console.print(f"[yellow]Warning: Could not update catalogs: {e}[/yellow]")
+                logger.error(f"Catalog update failed: {e}")
 
 
 def _dry_run_validation(files, skip_invalid):
@@ -246,6 +271,8 @@ def _run_ingestion(files, lakehouse_path, version, skip_invalid, incremental):
     if total_episodes > 0:
         console.print(f"\n[bold green][OK] Successfully ingested {total_episodes} episode(s)![/bold green]")
         console.print(f"[green]Data written to: {lakehouse_path}/normalized/{version}/[/green]")
+    
+    return total_episodes, total_failed
 
 
 def _filter_new_episodes(files, lakehouse_path, version):

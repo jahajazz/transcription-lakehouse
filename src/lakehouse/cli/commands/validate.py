@@ -5,6 +5,7 @@ Performs comprehensive validation on lakehouse artifacts including data integrit
 schema compliance, and quality metrics.
 """
 
+import json
 import click
 from pathlib import Path
 from rich.console import Console
@@ -48,8 +49,8 @@ console = Console(legacy_windows=False)
 @click.option(
     '--output-dir',
     type=click.Path(exists=False, file_okay=False, dir_okay=True, path_type=Path),
-    default=Path('validation_reports'),
-    help='Directory to save validation reports (default: ./validation_reports)',
+    default=None,
+    help='Directory to save validation reports (default: lakehouse/catalogs/validation_reports)',
 )
 @click.option(
     '--detailed',
@@ -165,6 +166,10 @@ def validate(
                 console.print(f"[yellow]No {artifact_type} artifacts found to validate[/yellow]")
                 return
             reports = filtered_reports
+        
+        # Set default output directory for validation reports
+        if save_report and output_dir is None:
+            output_dir = lakehouse_path / "catalogs" / "validation_reports"
         
         # Create reporter
         reporter = ValidationReporter(output_dir if save_report else None)
@@ -285,3 +290,4 @@ def _validate_specific_artifact(
             console.print(f"[red]Error validating {parquet_file}: {e}[/red]")
     
     return reports
+
