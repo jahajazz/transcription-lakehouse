@@ -38,7 +38,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/metrics/coverage.py` - Category A: Coverage & Count metrics
 - ✅ `src/lakehouse/quality/metrics/distribution.py` - Category B: Length & Distribution metrics
 - ✅ `src/lakehouse/quality/metrics/integrity.py` - Category C: Ordering & Integrity metrics
-- `src/lakehouse/quality/metrics/balance.py` - Category D: Speaker & Series Balance metrics
+- ✅ `src/lakehouse/quality/metrics/balance.py` - Category D: Speaker & Series Balance metrics
 - `src/lakehouse/quality/metrics/text_quality.py` - Category E: Text Quality Proxy metrics
 - `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
 - `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
@@ -89,10 +89,10 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 2.3.2 Implement `detect_integrity_violations()` for negative/zero durations and missing fields
     - [x] 2.3.3 Implement `detect_duplicates()` for exact (normalized text match) and near-duplicates (fuzzy match using rapidfuzz)
     - [x] 2.3.4 Implement `validate_integrity_thresholds()` to check violations against thresholds
-  - [ ] 2.4 Create `src/lakehouse/quality/metrics/balance.py` implementing FR-18, FR-19:
-    - [ ] 2.4.1 Implement `calculate_speaker_distribution()` for counts, percentages, avg duration per speaker
-    - [ ] 2.4.2 Implement `calculate_series_balance()` for per-series statistics (if series metadata available)
-    - [ ] 2.4.3 Return top N speakers and long-tail statistics
+  - [x] 2.4 Create `src/lakehouse/quality/metrics/balance.py` implementing FR-18, FR-19:
+    - [x] 2.4.1 Implement `calculate_speaker_distribution()` for counts, percentages, avg duration per speaker
+    - [x] 2.4.2 Implement `calculate_series_balance()` for per-series statistics (if series metadata available)
+    - [x] 2.4.3 Return top N speakers and long-tail statistics
   - [ ] 2.5 Create `src/lakehouse/quality/metrics/text_quality.py` implementing FR-20, FR-21, FR-22:
     - [ ] 2.5.1 Implement `calculate_text_metrics()` for token count, word count, character count per segment
     - [ ] 2.5.2 Implement `calculate_lexical_density()` using NLTK or spaCy stopword lists
