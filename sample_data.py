@@ -69,3 +69,4 @@ if __name__ == "__main__":
     show_beats_sample()
     show_embeddings_sample()
     show_search_index_info()
+

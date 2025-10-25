@@ -13,3 +13,4 @@ if (Test-Path ".\venv\Scripts\Activate.ps1") {
 Write-Host "✅ UTF-8 encoding set" -ForegroundColor Green
 Write-Host "🚀 Lakehouse environment ready!" -ForegroundColor Cyan
 Write-Host "💡 Try: lakehouse --help" -ForegroundColor Yellow
+

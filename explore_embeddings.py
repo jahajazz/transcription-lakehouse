@@ -8,6 +8,7 @@ import numpy as np
 import faiss
 import json
 from sentence_transformers import SentenceTransformer
+from sklearn.cluster import KMeans
 
 def load_search_index():
     """Load the FAISS search index"""
@@ -68,7 +69,7 @@ def semantic_search_example():
         
         print("Top 3 most similar spans:")
         for i, (dist, idx) in enumerate(zip(distances[0], indices[0])):
-            span_id = span_ids['artifact_ids'][int(idx)]
+            span_id = span_ids[int(idx)]
             span_data = spans_df[spans_df['span_id'] == span_id].iloc[0]
             
             print(f"\n  {i+1}. Similarity: {1-dist:.3f} (lower distance = more similar)")
@@ -86,22 +87,50 @@ def show_embedding_clusters():
     # Get embeddings as numpy array
     span_vectors = np.array([emb for emb in span_embeddings['embedding']])
     
-    # Simple clustering to show semantic groupings
-    from sklearn.cluster import KMeans
-    
-    # Cluster into 5 groups
-    kmeans = KMeans(n_clusters=5, random_state=42)
+    # Cluster into 10 semantic groups
+    n_clusters = 10
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
     cluster_labels = kmeans.fit_predict(span_vectors)
     
-    print("Content clusters (5 groups):")
-    for cluster_id in range(5):
-        cluster_spans = span_embeddings[cluster_labels == cluster_id]
-        print(f"\n  Cluster {cluster_id + 1}: {len(cluster_spans)} spans")
+    # Load span data to show content
+    spans_df = pd.read_parquet('lakehouse/spans/v1/spans.parquet')
+    
+    print(f"\nContent clusters ({n_clusters} semantic groups):")
+    for cluster_id in range(n_clusters):
+        cluster_indices = np.where(cluster_labels == cluster_id)[0]
+        cluster_span_ids = span_embeddings.iloc[cluster_indices]['artifact_id'].tolist()
         
-        # Show a sample from this cluster
+        # Get corresponding spans
+        cluster_spans = spans_df[spans_df['span_id'].isin(cluster_span_ids)]
+        
+        print(f"\n{'='*60}")
+        print(f"📂 CLUSTER {cluster_id + 1}: {len(cluster_spans)} spans")
+        print(f"{'='*60}")
+        
         if len(cluster_spans) > 0:
-            sample_span = cluster_spans.iloc[0]
-            print(f"    Sample: {sample_span['artifact_id']}")
+            # Show speakers in this cluster
+            speakers = cluster_spans['speaker'].value_counts()
+            print(f"\n  Speakers:")
+            for speaker, count in speakers.head(3).items():
+                print(f"    • {speaker}: {count} spans")
+            
+            # Show duration statistics
+            total_duration = cluster_spans['duration'].sum()
+            avg_duration = cluster_spans['duration'].mean()
+            print(f"\n  Duration:")
+            print(f"    • Total: {total_duration/60:.1f} minutes")
+            print(f"    • Average span: {avg_duration:.1f} seconds")
+            
+            # Show 3 sample texts from this cluster
+            print(f"\n  Sample content (showing thematic similarity):")
+            sample_indices = np.random.choice(len(cluster_spans), min(3, len(cluster_spans)), replace=False)
+            for i, idx in enumerate(sample_indices):
+                sample = cluster_spans.iloc[idx]
+                text_preview = sample['text'][:150].replace('\n', ' ')
+                print(f"\n    {i+1}. [{sample['speaker']}]")
+                print(f"       {text_preview}...")
+    
+    return cluster_labels, span_embeddings
 
 def show_beat_themes():
     """Show thematic organization of beats"""

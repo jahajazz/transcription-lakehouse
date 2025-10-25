@@ -1,0 +1,103 @@
+# Quality Assessment Thresholds Configuration
+# Defines validation thresholds for span and beat quality assessment
+# Based on PRD requirements (FR-9, FR-13, FR-17, FR-25, FR-27, FR-31)
+
+# Category A: Coverage & Count Metrics (FR-9)
+# Ensures that segments adequately cover the episode timeline
+coverage:
+  # Minimum percentage of episode duration covered by segments
+  coverage_min: 95.0
+  
+  # Maximum percentage of episode duration with gaps (no segments)
+  gap_max_percent: 2.0
+  
+  # Maximum percentage of episode duration with overlapping segments
+  overlap_max_percent: 2.0
+
+# Category B: Length & Distribution Metrics (FR-11, FR-13)
+# Validates that segment durations fall within target ranges
+length:
+  # Span length bounds (in seconds)
+  span_length_min: 20.0
+  span_length_max: 120.0
+  
+  # Minimum percentage of spans that must fall within bounds
+  span_length_compliance_min: 90.0
+  
+  # Beat length bounds (in seconds)
+  beat_length_min: 60.0
+  beat_length_max: 180.0
+  
+  # Minimum percentage of beats that must fall within bounds
+  beat_length_compliance_min: 90.0
+
+# Category C: Ordering & Integrity Metrics (FR-17)
+# Ensures temporal consistency and data integrity
+integrity:
+  # Maximum allowed timestamp regressions (should be 0)
+  timestamp_regressions_max: 0
+  
+  # Maximum allowed segments with negative or zero duration (should be 0)
+  negative_duration_max: 0
+  
+  # Maximum percentage of exact duplicate segments (identical text)
+  exact_duplicate_max_percent: 1.0
+  
+  # Maximum percentage of near-duplicate segments (high fuzzy similarity)
+  near_duplicate_max_percent: 3.0
+  
+  # Fuzzy similarity threshold for near-duplicate detection (0-1)
+  near_duplicate_threshold: 0.95
+
+# Category F: Embedding Sanity Checks (FR-23 through FR-31)
+# Detects embedding pathologies that would undermine semantic search
+embedding:
+  # Leakage thresholds (FR-25)
+  # Maximum percentage of neighbors that share the same speaker
+  same_speaker_neighbor_max_percent: 60.0
+  
+  # Maximum percentage of neighbors from the same episode
+  same_episode_neighbor_max_percent: 70.0
+  
+  # Length bias threshold (FR-27)
+  # Maximum absolute correlation between duration and embedding properties
+  length_bias_correlation_max: 0.3
+  
+  # Adjacency bias threshold (FR-31)
+  # Maximum percentage of neighbors that are temporally adjacent
+  adjacency_bias_max_percent: 40.0
+  
+  # Time tolerance for determining adjacency (in seconds)
+  adjacency_tolerance_seconds: 5.0
+
+# Sampling Parameters
+# Controls sample sizes for computationally expensive operations
+sampling:
+  # Number of segments to sample for neighbor coherence analysis
+  neighbor_sample_size: 100
+  
+  # Number of nearest neighbors to retrieve per query (k)
+  neighbor_k: 10
+  
+  # Number of random pairs to sample for lexical vs embedding similarity
+  random_pairs_sample_size: 500
+  
+  # Number of outliers to report per category (longest, shortest, etc.)
+  outlier_count: 20
+  
+  # Number of neighbor lists to include in diagnostic samples
+  neighbor_list_sample_size: 30
+  
+  # Number of top speakers to report in balance metrics
+  top_speakers_count: 10
+  
+  # Fixed random seed for reproducible sampling
+  random_seed: 42
+
+# Notes:
+# - All percentage thresholds are in the range 0-100
+# - Duration thresholds are in seconds
+# - Thresholds can be overridden via command-line arguments
+# - More strict thresholds may be appropriate for production datasets
+# - Relaxed thresholds may be useful during development/debugging
+
