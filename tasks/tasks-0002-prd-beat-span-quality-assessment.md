@@ -156,8 +156,8 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 5.4.4 Implement command function to instantiate QualityAssessor and run assessment
     - [x] 5.4.5 Implement console summary output with Rich (FR-40): RAG status, key metrics, failures, file paths
     - [x] 5.4.6 Add progress indicators using Rich Progress for long-running operations
-  - [ ] 5.5 Integrate quality command into CLI (modify `src/lakehouse/cli/__init__.py`):
-    - [ ] 5.5.1 Import quality command in main() function to register it
+  - [x] 5.5 Integrate quality command into CLI (modify `src/lakehouse/cli/__init__.py`):
+    - [x] 5.5.1 Import quality command in main() function to register it
   - [ ] 5.6 Implement main assessment orchestration in `src/lakehouse/quality/assessor.py`:
     - [ ] 5.6.1 Implement `QualityAssessor.run_assessment()` to coordinate all metric calculations
     - [ ] 5.6.2 Implement data loading from lakehouse paths (FR-3): episodes, spans, beats, embeddings
