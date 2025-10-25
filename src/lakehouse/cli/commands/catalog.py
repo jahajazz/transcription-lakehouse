@@ -566,3 +566,4 @@ def _export_catalog(catalog_df, catalog_type: str, output_format: str):
         console.print(f"\n{catalog_type.upper()} CATALOG")
         console.print("=" * 50)
         console.print(catalog_df.to_string(index=False))
+

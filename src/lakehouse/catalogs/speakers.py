@@ -63,10 +63,10 @@ class SpeakerCatalog:
                 speaker,
                 COUNT(DISTINCT episode_id) as episode_count,
                 COUNT(*) as total_utterances,
-                SUM(end - start) as total_duration_seconds,
-                AVG(end - start) as avg_utterance_duration_seconds,
-                MIN(start) as first_appearance_time,
-                MAX(end) as last_appearance_time,
+                SUM("end" - "start") as total_duration_seconds,
+                AVG("end" - "start") as avg_utterance_duration_seconds,
+                MIN("start") as first_appearance_time,
+                MAX("end") as last_appearance_time,
                 STRING_AGG(DISTINCT episode_id, ', ' ORDER BY episode_id) as episode_list,
                 COUNT(*) * 1.0 / COUNT(DISTINCT episode_id) as avg_utterances_per_episode
             FROM read_parquet(?)
@@ -218,10 +218,10 @@ class SpeakerCatalog:
                 speaker,
                 COUNT(DISTINCT episode_id) as episode_count,
                 COUNT(*) as total_utterances,
-                SUM(end - start) as total_duration_seconds,
-                AVG(end - start) as avg_utterance_duration_seconds,
-                MIN(start) as first_appearance_time,
-                MAX(end) as last_appearance_time,
+                SUM("end" - "start") as total_duration_seconds,
+                AVG("end" - "start") as avg_utterance_duration_seconds,
+                MIN("start") as first_appearance_time,
+                MAX("end") as last_appearance_time,
                 STRING_AGG(DISTINCT episode_id, ', ' ORDER BY episode_id) as episode_list
             FROM read_parquet(?)
             WHERE speaker = ?
@@ -327,3 +327,4 @@ def generate_speaker_catalog(
     
     saved_files = catalog.save_catalog(catalog_df, format=save_format)
     return catalog_df, saved_files
+

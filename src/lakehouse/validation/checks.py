@@ -422,8 +422,14 @@ def check_id_quality(df: pd.DataFrame, artifact_type: str) -> List[ValidationChe
         ))
         return checks
     
+    # Define primary keys (must be unique) vs foreign keys (can have duplicates)
+    primary_key_columns = [
+        'utterance_id', 'span_id', 'beat_id', 'section_id', 'artifact_id'
+    ]
+    foreign_key_columns = ['episode_id']
+    
     for col in id_columns:
-        # Check for null IDs
+        # Check for null IDs (applies to all ID columns)
         null_count = df[col].isnull().sum()
         if null_count > 0:
             checks.append(ValidationCheck(
@@ -441,22 +447,32 @@ def check_id_quality(df: pd.DataFrame, artifact_type: str) -> List[ValidationChe
                 details={"column": col},
             ))
         
-        # Check for duplicate IDs
-        duplicate_count = df[col].duplicated().sum()
-        if duplicate_count > 0:
+        # Check for duplicate IDs (only for primary keys)
+        if col in primary_key_columns:
+            duplicate_count = df[col].duplicated().sum()
+            if duplicate_count > 0:
+                checks.append(ValidationCheck(
+                    check_name=f"id_duplicates_{col}",
+                    passed=False,
+                    message=f"Found {duplicate_count} duplicate values in {col}",
+                    details={"duplicate_count": int(duplicate_count), "column": col},
+                    severity="error"
+                ))
+            else:
+                checks.append(ValidationCheck(
+                    check_name=f"id_duplicates_{col}",
+                    passed=True,
+                    message=f"No duplicate values in {col}",
+                    details={"column": col},
+                ))
+        elif col in foreign_key_columns:
+            # Foreign keys are expected to have duplicates - just report the count
+            unique_count = df[col].nunique()
             checks.append(ValidationCheck(
-                check_name=f"id_duplicates_{col}",
-                passed=False,
-                message=f"Found {duplicate_count} duplicate values in {col}",
-                details={"duplicate_count": int(duplicate_count), "column": col},
-                severity="error"
-            ))
-        else:
-            checks.append(ValidationCheck(
-                check_name=f"id_duplicates_{col}",
+                check_name=f"id_foreign_key_{col}",
                 passed=True,
-                message=f"No duplicate values in {col}",
-                details={"column": col},
+                message=f"Foreign key {col} has {unique_count} unique values across {len(df)} rows",
+                details={"unique_count": int(unique_count), "total_rows": len(df), "column": col},
             ))
     
     return checks
@@ -731,3 +747,4 @@ def validate_lakehouse(
                 reports[f"{artifact_type}_{parquet_file.stem}_error"] = error_report
     
     return reports
+

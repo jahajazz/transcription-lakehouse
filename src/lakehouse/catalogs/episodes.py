@@ -34,6 +34,51 @@ class EpisodeCatalog:
         self.catalog_path = lakehouse_path / "catalogs"
         self.catalog_path.mkdir(exist_ok=True)
     
+    def _extract_title(self, episode_id: str) -> str:
+        """
+        Extract title from episode_id.
+        
+        Episode IDs follow format: "Series - #NUM - YYYY-MM-DD - Title"
+        
+        Args:
+            episode_id: Full episode identifier
+        
+        Returns:
+            Extracted title or full episode_id if format doesn't match
+        """
+        try:
+            parts = episode_id.split(' - ')
+            if len(parts) >= 4:
+                # Join everything after the date (parts[3:])
+                return ' - '.join(parts[3:])
+            return episode_id
+        except Exception:
+            return episode_id
+    
+    def _extract_date(self, episode_id: str) -> Optional[str]:
+        """
+        Extract date from episode_id.
+        
+        Episode IDs follow format: "Series - #NUM - YYYY-MM-DD - Title"
+        
+        Args:
+            episode_id: Full episode identifier
+        
+        Returns:
+            Extracted date string (YYYY-MM-DD) or None if not found
+        """
+        try:
+            parts = episode_id.split(' - ')
+            if len(parts) >= 3:
+                # The date should be in parts[2]
+                date_str = parts[2]
+                # Validate it looks like a date (YYYY-MM-DD)
+                if len(date_str) == 10 and date_str[4] == '-' and date_str[7] == '-':
+                    return date_str
+            return None
+        except Exception:
+            return None
+    
     def generate_catalog(self) -> pd.DataFrame:
         """
         Generate episode catalog from normalized utterances.
@@ -61,15 +106,15 @@ class EpisodeCatalog:
             query = """
             SELECT 
                 episode_id,
-                MIN(start) as start_time,
-                MAX(end) as end_time,
-                MAX(end) - MIN(start) as duration_seconds,
+                MIN("start") as start_time,
+                MAX("end") as end_time,
+                MAX("end") - MIN("start") as duration_seconds,
                 COUNT(*) as utterance_count,
                 COUNT(DISTINCT speaker) as speaker_count,
                 STRING_AGG(DISTINCT speaker, ', ' ORDER BY speaker) as speaker_list,
                 STRING_AGG(text, ' ') as full_text,
-                MIN(start) as first_utterance_time,
-                MAX(end) as last_utterance_time
+                MIN("start") as first_utterance_time,
+                MAX("end") as last_utterance_time
             FROM read_parquet(?)
             GROUP BY episode_id
             ORDER BY episode_id
@@ -105,12 +150,17 @@ class EpisodeCatalog:
             catalog_df['catalog_generated'] = datetime.now()
             catalog_df['version'] = self.version
             
+            # Extract title and date from episode_id (format: "Series - #NUM - YYYY-MM-DD - Title")
+            catalog_df['title'] = catalog_df['episode_id'].apply(self._extract_title)
+            catalog_df['date'] = catalog_df['episode_id'].apply(self._extract_date)
+            
             # Reorder columns for better readability
             column_order = [
-                'episode_id', 'start_time', 'end_time', 'duration_seconds', 'duration_minutes',
+                'episode_id', 'title', 'date', 'duration_seconds', 'duration_minutes',
                 'utterance_count', 'speaker_count', 'speaker_list', 'avg_utterance_duration',
-                'first_utterance_time', 'last_utterance_time', 'source_file', 'file_path',
-                'file_size_bytes', 'file_modified', 'catalog_generated', 'version'
+                'start_time', 'end_time', 'first_utterance_time', 'last_utterance_time',
+                'source_file', 'file_path', 'file_size_bytes', 'file_modified',
+                'catalog_generated', 'version'
             ]
             
             # Only include columns that exist
@@ -197,15 +247,15 @@ class EpisodeCatalog:
             query = """
             SELECT 
                 episode_id,
-                MIN(start) as start_time,
-                MAX(end) as end_time,
-                MAX(end) - MIN(start) as duration_seconds,
+                MIN("start") as start_time,
+                MAX("end") as end_time,
+                MAX("end") - MIN("start") as duration_seconds,
                 COUNT(*) as utterance_count,
                 COUNT(DISTINCT speaker) as speaker_count,
                 STRING_AGG(DISTINCT speaker, ', ' ORDER BY speaker) as speaker_list,
-                AVG(end - start) as avg_utterance_duration,
-                MIN(start) as first_utterance_time,
-                MAX(end) as last_utterance_time
+                AVG("end" - "start") as avg_utterance_duration,
+                MIN("start") as first_utterance_time,
+                MAX("end") as last_utterance_time
             FROM read_parquet(?)
             WHERE episode_id = ?
             GROUP BY episode_id
@@ -287,3 +337,4 @@ def generate_episode_catalog(
     
     saved_files = catalog.save_catalog(catalog_df, format=save_format)
     return catalog_df, saved_files
+
