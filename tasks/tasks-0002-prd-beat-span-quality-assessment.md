@@ -142,10 +142,10 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 5.1.5 Implement report sections: Configuration, Coverage, Distribution, Integrity, Balance, Text Quality, Embedding, Outliers
     - [x] 5.1.6 Implement `generate_findings_and_remediation()` with specific recommendations for each failed threshold
     - [x] 5.1.7 Implement `generate_go_nogo_recommendation()` based on overall status
-  - [ ] 5.2 Implement metrics export (FR-4, FR-5, FR-6):
-    - [ ] 5.2.1 Implement `export_global_metrics_json()` for metrics/global.json
-    - [ ] 5.2.2 Implement `export_episodes_csv()` for metrics/episodes.csv with per-episode stats
-    - [ ] 5.2.3 Implement `export_segments_csv()` for metrics/spans.csv and metrics/beats.csv with flags
+  - [x] 5.2 Implement metrics export (FR-4, FR-5, FR-6):
+    - [x] 5.2.1 Implement `export_global_metrics_json()` for metrics/global.json
+    - [x] 5.2.2 Implement `export_episodes_csv()` for metrics/episodes.csv with per-episode stats
+    - [x] 5.2.3 Implement `export_segments_csv()` for metrics/spans.csv and metrics/beats.csv with flags
   - [ ] 5.3 Create output directory structure (FR-48, FR-49):
     - [ ] 5.3.1 Implement `create_output_structure()` to create timestamped directories (metrics/, diagnostics/, report/)
     - [ ] 5.3.2 Ensure proper directory creation and error handling

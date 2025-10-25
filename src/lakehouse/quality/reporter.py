@@ -3,12 +3,17 @@ Quality assessment report generation.
 
 Generates comprehensive markdown reports with metrics, visualizations,
 and recommendations per PRD requirements FR-35 through FR-40.
+
+Also handles metrics export to JSON and CSV formats per FR-4, FR-5, FR-6.
 """
 
+import json
+import csv
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
+
 from datetime import datetime
 
 from lakehouse.logger import get_default_logger
@@ -643,3 +648,278 @@ Proceeding without fixes could lead to:
             section += "- Test alternative embedding models\n"
             section += "- Increase diversity in training/embedding data\n\n"
         return section
+
+
+# Metrics Export Functions (FR-4, FR-5, FR-6)
+
+
+def export_global_metrics_json(
+    assessment_result,
+    output_path: Union[str, Path],
+) -> None:
+    """
+    Export global metrics to JSON file (FR-4, subtask 5.2.1).
+    
+    Creates a JSON file with all global-level metrics:
+    - Assessment metadata (timestamp, RAG status, duration)
+    - Coverage metrics (episode counts, coverage percentages)
+    - Distribution statistics (mean, median, std for spans/beats)
+    - Integrity counts (regressions, duplicates)
+    - Balance metrics (speaker counts, distribution)
+    - Text quality (average token counts, lexical density)
+    - Embedding metrics (coherence, leakage, bias)
+    - Threshold violations summary
+    
+    Args:
+        assessment_result: AssessmentResult object from quality assessment
+        output_path: Path to output JSON file
+    
+    Example:
+        >>> export_global_metrics_json(assessment_result, "output/metrics/global.json")
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    logger.info(f"Exporting global metrics to {output_path}...")
+    
+    metrics = assessment_result.metrics
+    
+    # Build global metrics dictionary
+    global_metrics = {
+        "metadata": {
+            "assessment_timestamp": metrics.timestamp.isoformat(),
+            "rag_status": assessment_result.rag_status.value,
+            "lakehouse_version": metrics.lakehouse_version,
+            "assessment_duration_seconds": assessment_result.assessment_duration_seconds,
+            "embeddings_available": metrics.embeddings_available,
+        },
+        "dataset_summary": {
+            "total_episodes": assessment_result.total_episodes,
+            "total_spans": assessment_result.total_spans,
+            "total_beats": assessment_result.total_beats,
+        },
+        "coverage": metrics.coverage_metrics.get('global', {}),
+        "distribution": {
+            "spans": metrics.distribution_metrics.get('spans', {}),
+            "beats": metrics.distribution_metrics.get('beats', {}),
+        },
+        "integrity": {
+            "timestamp_regressions": metrics.integrity_metrics.get('timestamp_regressions', 0),
+            "negative_durations": metrics.integrity_metrics.get('negative_durations', 0),
+            "exact_duplicates": {
+                "count": metrics.integrity_metrics.get('exact_duplicate_count', 0),
+                "percent": metrics.integrity_metrics.get('exact_duplicate_percent', 0.0),
+            },
+            "near_duplicates": {
+                "count": metrics.integrity_metrics.get('near_duplicate_count', 0),
+                "percent": metrics.integrity_metrics.get('near_duplicate_percent', 0.0),
+            },
+        },
+        "balance": {
+            "speakers": metrics.balance_metrics.get('speakers', {}),
+        },
+        "text_quality": metrics.text_quality_metrics.get('statistics', {}),
+        "embedding": metrics.embedding_metrics if metrics.embeddings_available else {},
+        "violations": {
+            "total_count": len(assessment_result.violations),
+            "error_count": len([v for v in assessment_result.violations if v.severity == "error"]),
+            "warning_count": len([v for v in assessment_result.violations if v.severity == "warning"]),
+            "violations_list": [
+                {
+                    "threshold_name": v.threshold_name,
+                    "expected": str(v.expected),
+                    "actual": str(v.actual),
+                    "severity": v.severity,
+                    "message": v.message,
+                }
+                for v in assessment_result.violations
+            ],
+        },
+        "thresholds_used": assessment_result.thresholds.to_dict(),
+    }
+    
+    # Write to JSON file
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(global_metrics, f, indent=2, default=str)
+    
+    logger.info(f"Global metrics exported to {output_path}")
+
+
+def export_episodes_csv(
+    episodes: pd.DataFrame,
+    coverage_metrics: Dict[str, Any],
+    output_path: Union[str, Path],
+) -> None:
+    """
+    Export per-episode metrics to CSV file (FR-5, subtask 5.2.2).
+    
+    Creates a CSV file with one row per episode containing:
+    - Episode ID
+    - Duration
+    - Span count and coverage percentage
+    - Beat count and coverage percentage
+    - Gap and overlap statistics
+    
+    Args:
+        episodes: DataFrame with episode metadata
+        coverage_metrics: Coverage metrics from calculate_episode_coverage()
+        output_path: Path to output CSV file
+    
+    Example:
+        >>> export_episodes_csv(episodes_df, coverage_metrics, "output/metrics/episodes.csv")
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    logger.info(f"Exporting per-episode metrics to {output_path}...")
+    
+    # Extract per-episode metrics
+    per_episode = coverage_metrics.get('per_episode', [])
+    
+    if not per_episode:
+        logger.warning("No per-episode metrics available for export")
+        return
+    
+    # Convert to DataFrame
+    episodes_df = pd.DataFrame(per_episode)
+    
+    # Ensure consistent column order
+    column_order = [
+        'episode_id',
+        'episode_duration_seconds',
+        'span_count',
+        'span_total_duration_seconds',
+        'span_coverage_percent',
+        'beat_count',
+        'beat_total_duration_seconds',
+        'beat_coverage_percent',
+    ]
+    
+    # Add gap/overlap columns if available
+    if 'gap_count' in episodes_df.columns:
+        column_order.extend([
+            'gap_count',
+            'gap_total_duration',
+            'gap_percent',
+            'overlap_count',
+            'overlap_total_duration',
+            'overlap_percent',
+        ])
+    
+    # Select available columns
+    available_columns = [col for col in column_order if col in episodes_df.columns]
+    episodes_df = episodes_df[available_columns]
+    
+    # Write to CSV
+    episodes_df.to_csv(output_path, index=False)
+    
+    logger.info(f"Exported {len(episodes_df)} episode metrics to {output_path}")
+
+
+def export_segments_csv(
+    segments: pd.DataFrame,
+    segment_type: str,
+    integrity_metrics: Dict[str, Any],
+    distribution_metrics: Dict[str, Any],
+    output_path: Union[str, Path],
+) -> None:
+    """
+    Export per-segment metrics to CSV file (FR-6, subtask 5.2.3).
+    
+    Creates a CSV file with one row per segment containing:
+    - Segment ID, episode ID, speaker ID
+    - Start time, end time, duration
+    - Text excerpt
+    - Quality flags:
+      - is_duplicate: Boolean for exact duplicates
+      - is_near_duplicate: Boolean for near-duplicates
+      - is_out_of_bounds: Boolean for length violations
+      - is_short: Boolean for below minimum length
+      - is_long: Boolean for above maximum length
+    
+    Args:
+        segments: DataFrame with segment data
+        segment_type: Type of segments ('spans' or 'beats')
+        integrity_metrics: Integrity metrics with duplicate information
+        distribution_metrics: Distribution metrics with length compliance
+        output_path: Path to output CSV file
+    
+    Example:
+        >>> export_segments_csv(spans_df, 'spans', integrity_metrics, distribution_metrics, 
+        ...                     "output/metrics/spans.csv")
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    logger.info(f"Exporting {segment_type} metrics to {output_path}...")
+    
+    if segments is None or len(segments) == 0:
+        logger.warning(f"No {segment_type} data available for export")
+        return
+    
+    # Create export dataframe
+    export_df = segments.copy()
+    
+    # Add quality flags
+    # Duplicate flags
+    duplicate_indices = set(integrity_metrics.get('exact_duplicate_indices', []))
+    near_duplicate_indices = set(integrity_metrics.get('near_duplicate_indices', []))
+    
+    export_df['is_duplicate'] = export_df.index.isin(duplicate_indices)
+    export_df['is_near_duplicate'] = export_df.index.isin(near_duplicate_indices)
+    
+    # Length compliance flags
+    segment_dist = distribution_metrics.get(segment_type, {})
+    segment_compliance = segment_dist.get('compliance', {})
+    
+    if segment_compliance:
+        below_min_indices = set(segment_compliance.get('below_min_indices', []))
+        above_max_indices = set(segment_compliance.get('above_max_indices', []))
+        within_bounds_indices = set(segment_compliance.get('within_bounds_indices', []))
+        
+        export_df['is_short'] = export_df.index.isin(below_min_indices)
+        export_df['is_long'] = export_df.index.isin(above_max_indices)
+        export_df['is_out_of_bounds'] = ~export_df.index.isin(within_bounds_indices)
+    else:
+        export_df['is_short'] = False
+        export_df['is_long'] = False
+        export_df['is_out_of_bounds'] = False
+    
+    # Calculate duration if not present
+    if 'duration' not in export_df.columns:
+        if 'start_time' in export_df.columns and 'end_time' in export_df.columns:
+            export_df['duration'] = export_df['end_time'] - export_df['start_time']
+    
+    # Truncate text for export
+    text_col = 'text' if 'text' in export_df.columns else 'normalized_text'
+    if text_col in export_df.columns:
+        export_df['text_excerpt'] = export_df[text_col].apply(
+            lambda t: str(t)[:200] + '...' if isinstance(t, str) and len(str(t)) > 200 else str(t)
+        )
+    
+    # Select columns for export
+    base_columns = [
+        'segment_id', 'episode_id', 'speaker_id',
+        'start_time', 'end_time', 'duration',
+    ]
+    
+    flag_columns = [
+        'is_duplicate', 'is_near_duplicate',
+        'is_short', 'is_long', 'is_out_of_bounds',
+    ]
+    
+    text_columns = ['text_excerpt'] if 'text_excerpt' in export_df.columns else []
+    
+    # Build final column list
+    export_columns = []
+    for col in base_columns:
+        if col in export_df.columns:
+            export_columns.append(col)
+    
+    export_columns.extend(flag_columns)
+    export_columns.extend(text_columns)
+    
+    # Export
+    export_df[export_columns].to_csv(output_path, index=False)
+    
+    logger.info(f"Exported {len(export_df)} {segment_type} with quality flags to {output_path}")
