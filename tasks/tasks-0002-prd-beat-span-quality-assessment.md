@@ -43,7 +43,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
 - ✅ `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
 - ✅ `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
-- `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
+- ✅ `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
 - ✅ `config/quality_thresholds.yaml` - Default threshold configuration
 - `tests/test_quality_metrics.py` - Unit tests for metrics calculators
 - `tests/test_quality_assessment.py` - Integration tests for full assessment
@@ -149,13 +149,13 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
   - [x] 5.3 Create output directory structure (FR-48, FR-49):
     - [x] 5.3.1 Implement `create_output_structure()` to create timestamped directories (metrics/, diagnostics/, report/)
     - [x] 5.3.2 Ensure proper directory creation and error handling
-  - [ ] 5.4 Create `src/lakehouse/cli/commands/quality.py` implementing FR-1, FR-2:
-    - [ ] 5.4.1 Create `quality` command with @cli.command() decorator and common options
-    - [ ] 5.4.2 Add CLI options: --version, --level (spans/beats/all), --output-dir, --sample-size, --config
-    - [ ] 5.4.3 Add threshold override options: --coverage-min, --span-length-min, --span-length-max, --beat-length-min, --beat-length-max, --neighbor-k
-    - [ ] 5.4.4 Implement command function to instantiate QualityAssessor and run assessment
-    - [ ] 5.4.5 Implement console summary output with Rich (FR-40): RAG status, key metrics, failures, file paths
-    - [ ] 5.4.6 Add progress indicators using Rich Progress for long-running operations
+  - [x] 5.4 Create `src/lakehouse/cli/commands/quality.py` implementing FR-1, FR-2:
+    - [x] 5.4.1 Create `quality` command with @cli.command() decorator and common options
+    - [x] 5.4.2 Add CLI options: --version, --level (spans/beats/all), --output-dir, --sample-size, --config
+    - [x] 5.4.3 Add threshold override options: --coverage-min, --span-length-min, --span-length-max, --beat-length-min, --beat-length-max, --neighbor-k
+    - [x] 5.4.4 Implement command function to instantiate QualityAssessor and run assessment
+    - [x] 5.4.5 Implement console summary output with Rich (FR-40): RAG status, key metrics, failures, file paths
+    - [x] 5.4.6 Add progress indicators using Rich Progress for long-running operations
   - [ ] 5.5 Integrate quality command into CLI (modify `src/lakehouse/cli/__init__.py`):
     - [ ] 5.5.1 Import quality command in main() function to register it
   - [ ] 5.6 Implement main assessment orchestration in `src/lakehouse/quality/assessor.py`:
