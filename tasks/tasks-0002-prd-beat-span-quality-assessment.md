@@ -125,7 +125,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 3.6.2 Implement `calculate_adjacency_bias()` for % temporally adjacent neighbors (within 5s)
     - [x] 3.6.3 Implement `validate_adjacency_threshold()` to check ≤ 40% adjacency
 
-- [ ] 4.0 Diagnostics & Outlier Detection (Category G)
+- [x] 4.0 Diagnostics & Outlier Detection (Category G)
   - [x] 4.1 Create `src/lakehouse/quality/diagnostics.py` implementing FR-32, FR-33, FR-34:
     - [x] 4.1.1 Implement `identify_outliers()` to find longest, shortest, most isolated, most hubby segments
     - [x] 4.1.2 Implement `sample_neighbor_lists()` for random sample of query segments with their neighbors
