@@ -923,3 +923,99 @@ def export_segments_csv(
     export_df[export_columns].to_csv(output_path, index=False)
     
     logger.info(f"Exported {len(export_df)} {segment_type} with quality flags to {output_path}")
+
+
+# Output Directory Management (FR-48, FR-49)
+
+
+def create_output_structure(
+    base_output_dir: Union[str, Path],
+    use_timestamp: bool = True,
+) -> Dict[str, Path]:
+    """
+    Create output directory structure for quality assessment (FR-48, FR-49, subtask 5.3.1, 5.3.2).
+    
+    Creates a timestamped directory structure with subdirectories for:
+    - metrics/: JSON and CSV metrics exports
+    - diagnostics/: CSV files for outliers and neighbor samples
+    - report/: Markdown quality report
+    
+    Args:
+        base_output_dir: Base directory for quality assessment outputs
+        use_timestamp: Whether to create timestamped subdirectory (default: True)
+    
+    Returns:
+        Dictionary with paths to created directories:
+        - 'root': Root output directory
+        - 'metrics': Metrics subdirectory
+        - 'diagnostics': Diagnostics subdirectory
+        - 'report': Report subdirectory
+    
+    Raises:
+        OSError: If directory creation fails (with proper error handling)
+    
+    Example:
+        >>> paths = create_output_structure("output/quality", use_timestamp=True)
+        >>> paths['root']
+        PosixPath('output/quality/20251025_143022')
+        >>> paths['metrics']
+        PosixPath('output/quality/20251025_143022/metrics')
+    """
+    base_output_dir = Path(base_output_dir)
+    
+    try:
+        # Create timestamped directory if requested
+        if use_timestamp:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            root_dir = base_output_dir / timestamp
+        else:
+            root_dir = base_output_dir
+        
+        # Create root directory
+        root_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created output directory: {root_dir}")
+        
+        # Create subdirectories
+        subdirs = {
+            'root': root_dir,
+            'metrics': root_dir / 'metrics',
+            'diagnostics': root_dir / 'diagnostics',
+            'report': root_dir / 'report',
+        }
+        
+        for name, path in subdirs.items():
+            if name != 'root':  # root already created
+                try:
+                    path.mkdir(parents=True, exist_ok=True)
+                    logger.debug(f"Created subdirectory: {path}")
+                except OSError as e:
+                    logger.error(f"Failed to create {name} directory at {path}: {e}")
+                    raise OSError(f"Failed to create {name} directory: {e}") from e
+        
+        logger.info(
+            f"Output structure created: "
+            f"metrics={subdirs['metrics']}, "
+            f"diagnostics={subdirs['diagnostics']}, "
+            f"report={subdirs['report']}"
+        )
+        
+        return subdirs
+    
+    except PermissionError as e:
+        logger.error(f"Permission denied creating output directory {base_output_dir}: {e}")
+        raise PermissionError(
+            f"Cannot create output directory at {base_output_dir}. "
+            f"Check write permissions."
+        ) from e
+    
+    except OSError as e:
+        logger.error(f"Failed to create output directory structure: {e}")
+        raise OSError(
+            f"Failed to create output directory structure at {base_output_dir}: {e}"
+        ) from e
+    
+    except Exception as e:
+        logger.error(f"Unexpected error creating output structure: {e}")
+        raise RuntimeError(
+            f"Unexpected error creating output structure: {e}"
+        ) from e

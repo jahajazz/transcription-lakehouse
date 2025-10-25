@@ -146,9 +146,9 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 5.2.1 Implement `export_global_metrics_json()` for metrics/global.json
     - [x] 5.2.2 Implement `export_episodes_csv()` for metrics/episodes.csv with per-episode stats
     - [x] 5.2.3 Implement `export_segments_csv()` for metrics/spans.csv and metrics/beats.csv with flags
-  - [ ] 5.3 Create output directory structure (FR-48, FR-49):
-    - [ ] 5.3.1 Implement `create_output_structure()` to create timestamped directories (metrics/, diagnostics/, report/)
-    - [ ] 5.3.2 Ensure proper directory creation and error handling
+  - [x] 5.3 Create output directory structure (FR-48, FR-49):
+    - [x] 5.3.1 Implement `create_output_structure()` to create timestamped directories (metrics/, diagnostics/, report/)
+    - [x] 5.3.2 Ensure proper directory creation and error handling
   - [ ] 5.4 Create `src/lakehouse/cli/commands/quality.py` implementing FR-1, FR-2:
     - [ ] 5.4.1 Create `quality` command with @cli.command() decorator and common options
     - [ ] 5.4.2 Add CLI options: --version, --level (spans/beats/all), --output-dir, --sample-size, --config
