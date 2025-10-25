@@ -108,15 +108,22 @@ lakehouse validate --save-report --output-format json
 ### 4. Generate Catalogs
 
 ```bash
-# Generate all catalogs
-lakehouse catalog generate
+# Generate all catalogs (default)
+lakehouse catalog
 
-# Generate specific catalog
-lakehouse catalog generate episodes
-lakehouse catalog generate speakers
+# Generate specific catalog type
+lakehouse catalog --catalog-type episodes
+lakehouse catalog --catalog-type speakers
+lakehouse catalog --catalog-type schema
 
-# View catalog
-lakehouse catalog view episodes
+# Save catalogs to files
+lakehouse catalog --save-catalog --output-format json
+
+# Show detailed episode information
+lakehouse catalog --episode-id "SW - #001 - 2018-05-18 - Resurrection of Logos"
+
+# Show speaker rankings
+lakehouse catalog --rankings
 ```
 
 ## Architecture
@@ -211,19 +218,26 @@ Options:
 ```
 
 #### `lakehouse catalog`
-Manage metadata catalogs.
+Generate and display metadata catalogs using DuckDB queries.
 
 ```bash
-lakehouse catalog generate [OPTIONS] [CATALOG_TYPE]
-lakehouse catalog view [OPTIONS] CATALOG_TYPE
-
-Arguments:
-  CATALOG_TYPE  [episodes|speakers|schema|all]
+lakehouse catalog [OPTIONS]
 
 Options:
-  --version TEXT  Version identifier [default: v1]
-  --format TEXT   Output format [table|json] [default: table]
-  --help         Show this message and exit
+  --version TEXT               Version identifier [default: v1]
+  --catalog-type TEXT          Catalog type [episodes|speakers|schema|all] [default: all]
+  --output-format TEXT         Output format [console|json|text] [default: console]
+  --save-catalog               Save catalog to files
+  --output-dir DIRECTORY       Directory to save catalogs [default: lakehouse/catalogs]
+  --detailed                   Show detailed catalog information
+  --episode-id TEXT            Show details for specific episode
+  --speaker-name TEXT          Show details for specific speaker
+  --rankings                   Show speaker rankings by activity
+  --statistics                 Show overall statistics
+  --lakehouse-path PATH        Path to lakehouse directory [default: ./lakehouse]
+  --config-dir PATH            Path to config directory [default: ./config]
+  --log-level TEXT             Logging level [default: INFO]
+  --help                       Show this message and exit
 ```
 
 ## Configuration
