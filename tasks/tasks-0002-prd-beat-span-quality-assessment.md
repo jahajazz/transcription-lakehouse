@@ -40,7 +40,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/metrics/integrity.py` - Category C: Ordering & Integrity metrics
 - ✅ `src/lakehouse/quality/metrics/balance.py` - Category D: Speaker & Series Balance metrics
 - ✅ `src/lakehouse/quality/metrics/text_quality.py` - Category E: Text Quality Proxy metrics
-- `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
+- ✅ `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
 - `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
 - `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
 - `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
@@ -99,31 +99,31 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 2.5.3 Implement `calculate_punctuation_ratio()` for text quality proxy
     - [x] 2.5.4 Implement `extract_top_terms()` for top 20 unigrams and bigrams (with stopword filtering)
 
-- [ ] 3.0 Embedding Sanity Checks (Category F)
-  - [ ] 3.1 Create `src/lakehouse/quality/metrics/embedding.py` with embedding utilities:
-    - [ ] 3.1.1 Implement `load_embeddings()` to read span/beat embeddings from parquet with graceful handling if missing
-    - [ ] 3.1.2 Implement `stratified_sample_segments()` for reproducible sampling by episode and speaker
-    - [ ] 3.1.3 Implement `compute_cosine_similarity()` using NumPy (with optional FAISS optimization)
-  - [ ] 3.2 Implement neighbor coherence analysis (FR-23):
-    - [ ] 3.2.1 Implement `find_top_k_neighbors()` for each sampled segment
-    - [ ] 3.2.2 Implement `extract_neighbor_themes()` to summarize topic terms from neighbor texts
-    - [ ] 3.2.3 Return coherence assessment (coherent vs random neighbor themes)
-  - [ ] 3.3 Implement speaker and episode leakage detection (FR-24, FR-25):
-    - [ ] 3.3.1 Implement `calculate_speaker_leakage()` for % of neighbors sharing same speaker
-    - [ ] 3.3.2 Implement `calculate_episode_leakage()` for % of neighbors from same episode
-    - [ ] 3.3.3 Implement `validate_leakage_thresholds()` to check against max percentages
-  - [ ] 3.4 Implement length bias assessment (FR-26, FR-27):
-    - [ ] 3.4.1 Implement `calculate_embedding_norms()` (L2 norm per segment)
-    - [ ] 3.4.2 Implement `calculate_length_bias_correlation()` for duration vs norm and duration vs mean similarity
-    - [ ] 3.4.3 Implement `validate_length_bias_threshold()` to check correlation ≤ 0.3
-  - [ ] 3.5 Implement lexical vs embedding similarity alignment (FR-28):
-    - [ ] 3.5.1 Implement `sample_random_pairs()` for reproducible pair sampling
-    - [ ] 3.5.2 Implement `calculate_lexical_similarity()` using Jaccard or TF-IDF cosine
-    - [ ] 3.5.3 Implement `calculate_similarity_correlation()` between lexical and embedding similarities
-  - [ ] 3.6 Implement cross-series and adjacency bias checks (FR-29, FR-30, FR-31):
-    - [ ] 3.6.1 Implement `calculate_cross_series_neighbors()` for % neighbors from different series
-    - [ ] 3.6.2 Implement `calculate_adjacency_bias()` for % temporally adjacent neighbors (within 5s)
-    - [ ] 3.6.3 Implement `validate_adjacency_threshold()` to check ≤ 40% adjacency
+- [x] 3.0 Embedding Sanity Checks (Category F)
+  - [x] 3.1 Create `src/lakehouse/quality/metrics/embedding.py` with embedding utilities:
+    - [x] 3.1.1 Implement `load_embeddings()` to read span/beat embeddings from parquet with graceful handling if missing
+    - [x] 3.1.2 Implement `stratified_sample_segments()` for reproducible sampling by episode and speaker
+    - [x] 3.1.3 Implement `compute_cosine_similarity()` using NumPy (with optional FAISS optimization)
+  - [x] 3.2 Implement neighbor coherence analysis (FR-23):
+    - [x] 3.2.1 Implement `find_top_k_neighbors()` for each sampled segment
+    - [x] 3.2.2 Implement `extract_neighbor_themes()` to summarize topic terms from neighbor texts
+    - [x] 3.2.3 Return coherence assessment (coherent vs random neighbor themes)
+  - [x] 3.3 Implement speaker and episode leakage detection (FR-24, FR-25):
+    - [x] 3.3.1 Implement `calculate_speaker_leakage()` for % of neighbors sharing same speaker
+    - [x] 3.3.2 Implement `calculate_episode_leakage()` for % of neighbors from same episode
+    - [x] 3.3.3 Implement `validate_leakage_thresholds()` to check against max percentages
+  - [x] 3.4 Implement length bias assessment (FR-26, FR-27):
+    - [x] 3.4.1 Implement `calculate_embedding_norms()` (L2 norm per segment)
+    - [x] 3.4.2 Implement `calculate_length_bias_correlation()` for duration vs norm and duration vs mean similarity
+    - [x] 3.4.3 Implement `validate_length_bias_threshold()` to check correlation ≤ 0.3
+  - [x] 3.5 Implement lexical vs embedding similarity alignment (FR-28):
+    - [x] 3.5.1 Implement `sample_random_pairs()` for reproducible pair sampling
+    - [x] 3.5.2 Implement `calculate_lexical_similarity()` using Jaccard or TF-IDF cosine
+    - [x] 3.5.3 Implement `calculate_similarity_correlation()` between lexical and embedding similarities
+  - [x] 3.6 Implement cross-series and adjacency bias checks (FR-29, FR-30, FR-31):
+    - [x] 3.6.1 Implement `calculate_cross_series_neighbors()` for % neighbors from different series
+    - [x] 3.6.2 Implement `calculate_adjacency_bias()` for % temporally adjacent neighbors (within 5s)
+    - [x] 3.6.3 Implement `validate_adjacency_threshold()` to check ≤ 40% adjacency
 
 - [ ] 4.0 Diagnostics & Outlier Detection (Category G)
   - [ ] 4.1 Create `src/lakehouse/quality/diagnostics.py` implementing FR-32, FR-33, FR-34:
