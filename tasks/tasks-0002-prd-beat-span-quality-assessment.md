@@ -158,14 +158,14 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 5.4.6 Add progress indicators using Rich Progress for long-running operations
   - [x] 5.5 Integrate quality command into CLI (modify `src/lakehouse/cli/__init__.py`):
     - [x] 5.5.1 Import quality command in main() function to register it
-  - [ ] 5.6 Implement main assessment orchestration in `src/lakehouse/quality/assessor.py`:
-    - [ ] 5.6.1 Implement `QualityAssessor.run_assessment()` to coordinate all metric calculations
-    - [ ] 5.6.2 Implement data loading from lakehouse paths (FR-3): episodes, spans, beats, embeddings
-    - [ ] 5.6.3 Implement threshold loading from config with CLI overrides
-    - [ ] 5.6.4 Call all metric calculators (coverage, distribution, integrity, balance, text_quality, embedding, diagnostics)
-    - [ ] 5.6.5 Aggregate results into MetricsBundle
-    - [ ] 5.6.6 Implement reproducibility (FR-51, FR-52): fixed random seed, consistent rounding to 2-3 decimal places
-    - [ ] 5.6.7 Implement graceful handling of missing embeddings (FR-50): skip embedding checks, report in summary
+  - [x] 5.6 Implement main assessment orchestration in `src/lakehouse/quality/assessor.py`:
+    - [x] 5.6.1 Implement `QualityAssessor.run_assessment()` to coordinate all metric calculations
+    - [x] 5.6.2 Implement data loading from lakehouse paths (FR-3): episodes, spans, beats, embeddings
+    - [x] 5.6.3 Implement threshold loading from config with CLI overrides
+    - [x] 5.6.4 Call all metric calculators (coverage, distribution, integrity, balance, text_quality, embedding, diagnostics)
+    - [x] 5.6.5 Aggregate results into MetricsBundle
+    - [x] 5.6.6 Implement reproducibility (FR-51, FR-52): fixed random seed, consistent rounding to 2-3 decimal places
+    - [x] 5.6.7 Implement graceful handling of missing embeddings (FR-50): skip embedding checks, report in summary
 
 - [ ] 6.0 Testing & Documentation
   - [ ] 6.1 Create test fixtures in `tests/fixtures/quality_test_data.py`:
