@@ -41,7 +41,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/metrics/balance.py` - Category D: Speaker & Series Balance metrics
 - ✅ `src/lakehouse/quality/metrics/text_quality.py` - Category E: Text Quality Proxy metrics
 - ✅ `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
-- `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
+- ✅ `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
 - `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
 - `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
 - ✅ `config/quality_thresholds.yaml` - Default threshold configuration
@@ -126,12 +126,12 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 3.6.3 Implement `validate_adjacency_threshold()` to check ≤ 40% adjacency
 
 - [ ] 4.0 Diagnostics & Outlier Detection (Category G)
-  - [ ] 4.1 Create `src/lakehouse/quality/diagnostics.py` implementing FR-32, FR-33, FR-34:
-    - [ ] 4.1.1 Implement `identify_outliers()` to find longest, shortest, most isolated, most hubby segments
-    - [ ] 4.1.2 Implement `sample_neighbor_lists()` for random sample of query segments with their neighbors
-    - [ ] 4.1.3 Implement `format_text_excerpt()` to truncate text to 100 chars with "..." and CSV escaping
-    - [ ] 4.1.4 Implement `export_outliers_csv()` to write outliers.csv with ID, episode, speaker, duration, text, metric
-    - [ ] 4.1.5 Implement `export_neighbors_csv()` to write neighbors_sample.csv with query and neighbor details
+  - [x] 4.1 Create `src/lakehouse/quality/diagnostics.py` implementing FR-32, FR-33, FR-34:
+    - [x] 4.1.1 Implement `identify_outliers()` to find longest, shortest, most isolated, most hubby segments
+    - [x] 4.1.2 Implement `sample_neighbor_lists()` for random sample of query segments with their neighbors
+    - [x] 4.1.3 Implement `format_text_excerpt()` to truncate text to 100 chars with "..." and CSV escaping
+    - [x] 4.1.4 Implement `export_outliers_csv()` to write outliers.csv with ID, episode, speaker, duration, text, metric
+    - [x] 4.1.5 Implement `export_neighbors_csv()` to write neighbors_sample.csv with query and neighbor details
 
 - [ ] 5.0 Report Generation & CLI Integration
   - [ ] 5.1 Create `src/lakehouse/quality/reporter.py` implementing FR-35 through FR-40:
