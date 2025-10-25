@@ -39,7 +39,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/metrics/distribution.py` - Category B: Length & Distribution metrics
 - ✅ `src/lakehouse/quality/metrics/integrity.py` - Category C: Ordering & Integrity metrics
 - ✅ `src/lakehouse/quality/metrics/balance.py` - Category D: Speaker & Series Balance metrics
-- `src/lakehouse/quality/metrics/text_quality.py` - Category E: Text Quality Proxy metrics
+- ✅ `src/lakehouse/quality/metrics/text_quality.py` - Category E: Text Quality Proxy metrics
 - `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
 - `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
 - `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
@@ -93,11 +93,11 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 2.4.1 Implement `calculate_speaker_distribution()` for counts, percentages, avg duration per speaker
     - [x] 2.4.2 Implement `calculate_series_balance()` for per-series statistics (if series metadata available)
     - [x] 2.4.3 Return top N speakers and long-tail statistics
-  - [ ] 2.5 Create `src/lakehouse/quality/metrics/text_quality.py` implementing FR-20, FR-21, FR-22:
-    - [ ] 2.5.1 Implement `calculate_text_metrics()` for token count, word count, character count per segment
-    - [ ] 2.5.2 Implement `calculate_lexical_density()` using NLTK or spaCy stopword lists
-    - [ ] 2.5.3 Implement `calculate_punctuation_ratio()` for text quality proxy
-    - [ ] 2.5.4 Implement `extract_top_terms()` for top 20 unigrams and bigrams (with stopword filtering)
+  - [x] 2.5 Create `src/lakehouse/quality/metrics/text_quality.py` implementing FR-20, FR-21, FR-22:
+    - [x] 2.5.1 Implement `calculate_text_metrics()` for token count, word count, character count per segment
+    - [x] 2.5.2 Implement `calculate_lexical_density()` using NLTK or spaCy stopword lists
+    - [x] 2.5.3 Implement `calculate_punctuation_ratio()` for text quality proxy
+    - [x] 2.5.4 Implement `extract_top_terms()` for top 20 unigrams and bigrams (with stopword filtering)
 
 - [ ] 3.0 Embedding Sanity Checks (Category F)
   - [ ] 3.1 Create `src/lakehouse/quality/metrics/embedding.py` with embedding utilities:
