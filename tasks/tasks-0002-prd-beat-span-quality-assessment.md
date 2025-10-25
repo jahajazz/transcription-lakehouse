@@ -42,7 +42,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/metrics/text_quality.py` - Category E: Text Quality Proxy metrics
 - ✅ `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
 - ✅ `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
-- `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
+- ✅ `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
 - `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
 - ✅ `config/quality_thresholds.yaml` - Default threshold configuration
 - `tests/test_quality_metrics.py` - Unit tests for metrics calculators
@@ -134,14 +134,14 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 4.1.5 Implement `export_neighbors_csv()` to write neighbors_sample.csv with query and neighbor details
 
 - [ ] 5.0 Report Generation & CLI Integration
-  - [ ] 5.1 Create `src/lakehouse/quality/reporter.py` implementing FR-35 through FR-40:
-    - [ ] 5.1.1 Implement `QualityReporter` class with `generate_markdown_report()` method
-    - [ ] 5.1.2 Implement `generate_executive_summary()` with RAG status, timestamp, counts, failures
-    - [ ] 5.1.3 Implement `determine_rag_status()` logic (Green: all pass, Amber: 1-2 non-critical, Red: multiple/critical failures)
-    - [ ] 5.1.4 Implement `generate_ascii_histogram()` for duration distributions using block characters
-    - [ ] 5.1.5 Implement report sections: Configuration, Coverage, Distribution, Integrity, Balance, Text Quality, Embedding, Outliers
-    - [ ] 5.1.6 Implement `generate_findings_and_remediation()` with specific recommendations for each failed threshold
-    - [ ] 5.1.7 Implement `generate_go_nogo_recommendation()` based on overall status
+  - [x] 5.1 Create `src/lakehouse/quality/reporter.py` implementing FR-35 through FR-40:
+    - [x] 5.1.1 Implement `QualityReporter` class with `generate_markdown_report()` method
+    - [x] 5.1.2 Implement `generate_executive_summary()` with RAG status, timestamp, counts, failures
+    - [x] 5.1.3 Implement `determine_rag_status()` logic (Green: all pass, Amber: 1-2 non-critical, Red: multiple/critical failures)
+    - [x] 5.1.4 Implement `generate_ascii_histogram()` for duration distributions using block characters
+    - [x] 5.1.5 Implement report sections: Configuration, Coverage, Distribution, Integrity, Balance, Text Quality, Embedding, Outliers
+    - [x] 5.1.6 Implement `generate_findings_and_remediation()` with specific recommendations for each failed threshold
+    - [x] 5.1.7 Implement `generate_go_nogo_recommendation()` based on overall status
   - [ ] 5.2 Implement metrics export (FR-4, FR-5, FR-6):
     - [ ] 5.2.1 Implement `export_global_metrics_json()` for metrics/global.json
     - [ ] 5.2.2 Implement `export_episodes_csv()` for metrics/episodes.csv with per-episode stats
