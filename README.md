@@ -70,46 +70,29 @@ lakehouse ingest input/transcripts/episode.jsonl
 lakehouse ingest input/transcripts/
 ```
 
-### 2. Generate Aggregations
+### 2. Materialize Derived Artifacts
 
 ```bash
-# Generate spans (speaker-contiguous utterances)
-lakehouse aggregate spans
+# Generate all artifacts (aggregations + embeddings + indices)
+lakehouse materialize --all
 
-# Generate beats (semantic meaning units)
-lakehouse aggregate beats
+# Or generate specific artifacts only
+lakehouse materialize --spans-only
+lakehouse materialize --beats-only
+lakehouse materialize --sections-only
+lakehouse materialize --embeddings-only
+lakehouse materialize --indices-only
 
-# Generate sections (5-12 minute blocks)
-lakehouse aggregate sections
-
-# Or generate all at once
-lakehouse aggregate all
+# Combine multiple steps
+lakehouse materialize --spans-only --beats-only --embeddings-only
 ```
 
-### 3. Create Embeddings
+The `materialize` command generates:
+- **Aggregations**: Spans (speaker-contiguous) → Beats (semantic units) → Sections (5-12 min blocks)
+- **Embeddings**: Vector representations for spans and beats
+- **Indices**: FAISS ANN indices for semantic search
 
-```bash
-# Generate embeddings for spans (default)
-lakehouse embed spans
-
-# Generate embeddings for beats
-lakehouse embed beats
-
-# Use specific model
-lakehouse embed spans --model all-MiniLM-L6-v2
-```
-
-### 4. Build Search Index
-
-```bash
-# Build ANN index for semantic search
-lakehouse index build spans
-
-# Search for similar content
-lakehouse index search "artificial intelligence and consciousness" --top-k 10
-```
-
-### 5. Validate Data
+### 3. Validate Data
 
 ```bash
 # Run validation checks
@@ -122,7 +105,7 @@ lakehouse validate --detailed
 lakehouse validate --save-report --output-format json
 ```
 
-### 6. Generate Catalogs
+### 4. Generate Catalogs
 
 ```bash
 # Generate all catalogs
@@ -186,54 +169,32 @@ Options:
   --help                Show this message and exit
 ```
 
-#### `lakehouse aggregate`
-Generate aggregated artifacts.
+#### `lakehouse materialize`
+Generate derived artifacts (aggregations, embeddings, and indices).
 
 ```bash
-lakehouse aggregate [OPTIONS] ARTIFACT_TYPE
-
-Arguments:
-  ARTIFACT_TYPE  [spans|beats|sections|all]
+lakehouse materialize [OPTIONS]
 
 Options:
-  --version TEXT        Version identifier [default: v1]
-  --config-path TEXT    Path to config directory
-  --help               Show this message and exit
+  --version TEXT          Version identifier [default: v1]
+  --spans-only            Generate only spans
+  --beats-only            Generate only beats (requires spans)
+  --sections-only         Generate only sections (requires beats)
+  --embeddings-only       Generate only embeddings (requires spans/beats)
+  --indices-only          Build only FAISS indices (requires embeddings)
+  --all                   Generate all artifacts (default if no flags)
+  --lakehouse-path PATH   Path to lakehouse directory [default: ./lakehouse]
+  --config-dir PATH       Path to config directory [default: ./config]
+  --log-level TEXT        Logging level [default: INFO]
+  --help                  Show this message and exit
 ```
 
-#### `lakehouse embed`
-Generate vector embeddings.
-
-```bash
-lakehouse embed [OPTIONS] ARTIFACT_TYPE
-
-Arguments:
-  ARTIFACT_TYPE  [spans|beats|sections]
-
-Options:
-  --model TEXT          Model name
-  --provider TEXT       Provider [local|openai] [default: local]
-  --batch-size INTEGER  Batch size for processing [default: 32]
-  --version TEXT        Version identifier [default: v1]
-  --help               Show this message and exit
-```
-
-#### `lakehouse index`
-Manage ANN search indexes.
-
-```bash
-lakehouse index build [OPTIONS] ARTIFACT_TYPE
-lakehouse index search [OPTIONS] QUERY
-
-Options (build):
-  --version TEXT        Version identifier [default: v1]
-  --metric TEXT         Distance metric [default: cosine]
-
-Options (search):
-  --artifact-type TEXT  Type to search [default: span]
-  --top-k INTEGER       Number of results [default: 10]
-  --version TEXT        Version identifier [default: v1]
-```
+The `materialize` command runs in sequence:
+1. **Spans** - Speaker-contiguous utterance groups
+2. **Beats** - Semantic meaning units (heuristic or embedding-based)
+3. **Sections** - 5-12 minute episode segments
+4. **Embeddings** - Vector representations (spans and beats)
+5. **Indices** - FAISS ANN indices for semantic search
 
 #### `lakehouse validate`
 Run validation checks.
@@ -543,7 +504,7 @@ transcription-lakehouse/
 
 **Issue**: `FAISS index not found`
 
-*Solution*: Build index first: `lakehouse index build spans`
+*Solution*: Build indices first: `lakehouse materialize --indices-only` (or run full `lakehouse materialize --all`)
 
 ## Roadmap
 
