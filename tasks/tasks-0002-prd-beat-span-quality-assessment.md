@@ -35,7 +35,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/assessor.py` - Main assessment orchestration and entry point
 - ✅ `src/lakehouse/quality/thresholds.py` - Threshold definitions and validation logic
 - ✅ `src/lakehouse/quality/metrics/__init__.py` - Metrics submodule initialization
-- `src/lakehouse/quality/metrics/coverage.py` - Category A: Coverage & Count metrics
+- ✅ `src/lakehouse/quality/metrics/coverage.py` - Category A: Coverage & Count metrics
 - `src/lakehouse/quality/metrics/distribution.py` - Category B: Length & Distribution metrics
 - `src/lakehouse/quality/metrics/integrity.py` - Category C: Ordering & Integrity metrics
 - `src/lakehouse/quality/metrics/balance.py` - Category D: Speaker & Series Balance metrics
@@ -64,7 +64,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 
 ## Tasks
 
-- [ ] 1.0 Project Setup & Module Structure
+- [x] 1.0 Project Setup & Module Structure
   - [x] 1.1 Create quality module directory structure (`src/lakehouse/quality/` and `src/lakehouse/quality/metrics/`)
   - [x] 1.2 Create `src/lakehouse/quality/__init__.py` with module exports
   - [x] 1.3 Create `src/lakehouse/quality/metrics/__init__.py` with metric function exports
@@ -74,11 +74,11 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
   - [x] 1.7 Define shared data structures: `MetricsBundle`, `AssessmentResult`, `RAGStatus` enum
 
 - [ ] 2.0 Data Metrics Implementation (Categories A-E)
-  - [ ] 2.1 Create `src/lakehouse/quality/metrics/coverage.py` implementing FR-7, FR-8, FR-9:
-    - [ ] 2.1.1 Implement `calculate_episode_coverage()` for total duration, span/beat coverage %
-    - [ ] 2.1.2 Implement `detect_gaps_and_overlaps()` to find timeline gaps and overlaps
-    - [ ] 2.1.3 Implement `validate_coverage_thresholds()` to check against configured thresholds
-    - [ ] 2.1.4 Return structured dict with per-episode and global coverage metrics
+  - [x] 2.1 Create `src/lakehouse/quality/metrics/coverage.py` implementing FR-7, FR-8, FR-9:
+    - [x] 2.1.1 Implement `calculate_episode_coverage()` for total duration, span/beat coverage %
+    - [x] 2.1.2 Implement `detect_gaps_and_overlaps()` to find timeline gaps and overlaps
+    - [x] 2.1.3 Implement `validate_coverage_thresholds()` to check against configured thresholds
+    - [x] 2.1.4 Return structured dict with per-episode and global coverage metrics
   - [ ] 2.2 Create `src/lakehouse/quality/metrics/distribution.py` implementing FR-10, FR-11, FR-12, FR-13:
     - [ ] 2.2.1 Implement `calculate_duration_statistics()` for min/max/mean/median/p5/p95/std
     - [ ] 2.2.2 Implement `calculate_length_compliance()` for % within target bounds (spans: 20-120s, beats: 60-180s)
