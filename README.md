@@ -438,6 +438,213 @@ Example report structure:
 }
 ```
 
+### Quality Assessment
+
+The lakehouse includes a comprehensive quality assessment system that evaluates spans and beats across multiple quality dimensions before downstream processing.
+
+#### Running Quality Assessment
+
+```bash
+# Assess both spans and beats with default thresholds
+lakehouse quality
+
+# Assess only spans or beats
+lakehouse quality --level spans
+lakehouse quality --level beats
+
+# Use custom thresholds
+lakehouse quality --coverage-min 90.0 --span-length-max 150.0
+
+# Custom sample size for embedding analysis
+lakehouse quality --sample-size 500 --neighbor-k 20
+
+# Use custom configuration file
+lakehouse quality --config custom_thresholds.yaml
+
+# Disable timestamped output directories
+lakehouse quality --no-timestamp --output-dir output/quality_report
+```
+
+#### Quality Metrics Categories
+
+The quality assessment evaluates **7 categories** of metrics:
+
+**Category A: Coverage & Count Metrics**
+- Episode coverage percentage (target: ≥95%)
+- Gap detection and quantification
+- Overlap detection and quantification
+- Segment counts per episode
+
+**Category B: Length & Distribution**
+- Duration statistics (min/max/mean/median/p5/p95)
+- Length compliance (spans: 20-120s, beats: 60-180s)
+- Distribution histograms
+- Outlier detection (too short/too long)
+
+**Category C: Ordering & Integrity**
+- Timestamp monotonicity validation
+- Negative/zero duration detection
+- Missing field detection
+- Duplicate detection (exact and near-duplicates)
+
+**Category D: Speaker & Series Balance**
+- Speaker distribution analysis
+- Per-speaker duration statistics
+- Series balance (if multiple series present)
+- Top speakers identification
+
+**Category E: Text Quality Proxies**
+- Token and word count statistics
+- Lexical density calculation
+- Punctuation ratios
+- Top unigrams and bigrams extraction
+
+**Category F: Embedding Sanity Checks**
+- Speaker leakage detection (target: ≤60% same speaker in neighbors)
+- Episode leakage detection (target: ≤70% same episode in neighbors)
+- Length bias correlation (target: ≤0.3)
+- Adjacency bias detection (target: ≤40% temporally adjacent neighbors)
+- Neighbor coherence analysis
+
+**Category G: Diagnostics & Outliers**
+- Longest/shortest segments identification
+- Most isolated/hubby segments (based on embeddings)
+- Neighbor list sampling for manual review
+- Diagnostic CSV exports
+
+#### Output Files
+
+Quality assessment generates comprehensive reports in `output/quality/YYYYMMDD_HHMMSS/`:
+
+```
+output/quality/20251026_143022/
+├── metrics/
+│   ├── global.json           # Global metrics and summary
+│   ├── episodes.csv          # Per-episode metrics
+│   ├── spans.csv             # Per-span metrics with validation flags
+│   └── beats.csv             # Per-beat metrics with validation flags
+├── diagnostics/
+│   ├── outliers.csv          # Top outliers by category
+│   └── neighbors_sample.csv  # Sample neighbor lists for review
+└── report/
+    └── quality_assessment.md # Human-readable markdown report
+```
+
+#### RAG Status
+
+Each assessment receives a RAG (Red/Amber/Green) status:
+
+- 🟢 **GREEN**: All thresholds passed, no critical issues
+- 🟠 **AMBER**: Minor threshold violations (1-2 non-critical warnings)
+- 🔴 **RED**: Multiple threshold failures or critical integrity issues
+
+#### Example Report Excerpt
+
+```markdown
+# Quality Assessment Report
+
+## Executive Summary
+
+**RAG Status**: 🟢 GREEN
+**Assessment Date**: 2025-10-26 14:30:22
+**Lakehouse Version**: v1
+**Episodes Assessed**: 539
+**Spans Assessed**: 45,231
+**Beats Assessed**: 12,108
+
+**Summary**: All quality thresholds passed. Data is ready for downstream processing.
+
+## Coverage Metrics
+
+- Global Span Coverage: 96.8%
+- Global Beat Coverage: 97.2%
+- Episodes with <95% coverage: 12 (2.2%)
+- Average gap percentage: 0.8%
+- Average overlap percentage: 0.5%
+
+## Length Distribution
+
+Span Duration Statistics:
+- Mean: 62.3s (target: 20-120s)
+- Median: 58.1s
+- 95th percentile: 115.2s
+- Within bounds: 92.4% ✓ (target: ≥90%)
+
+## Embedding Sanity Checks
+
+- Speaker leakage: 42.3% ✓ (target: ≤60%)
+- Episode leakage: 58.7% ✓ (target: ≤70%)
+- Length bias correlation: 0.18 ✓ (target: ≤0.3)
+- Adjacency bias: 28.5% ✓ (target: ≤40%)
+
+## Go/No-Go Recommendation
+
+**✓ GO** - Proceed with downstream processing (pair generation, labeling, fine-tuning)
+```
+
+#### Configurable Thresholds
+
+Create `config/quality_thresholds.yaml` to customize thresholds:
+
+```yaml
+coverage:
+  coverage_min: 95.0           # Minimum coverage %
+  gap_max_percent: 2.0         # Maximum gap %
+  overlap_max_percent: 2.0     # Maximum overlap %
+
+length:
+  span_length_min: 20.0        # Minimum span length (seconds)
+  span_length_max: 120.0       # Maximum span length
+  span_length_compliance_min: 90.0  # Min % within bounds
+  beat_length_min: 60.0        # Minimum beat length
+  beat_length_max: 180.0       # Maximum beat length
+  beat_length_compliance_min: 90.0  # Min % within bounds
+
+integrity:
+  timestamp_regressions_max: 0
+  negative_duration_max: 0
+  exact_duplicate_max_percent: 1.0
+  near_duplicate_max_percent: 3.0
+  near_duplicate_threshold: 0.95
+
+embedding:
+  same_speaker_neighbor_max_percent: 60.0
+  same_episode_neighbor_max_percent: 70.0
+  length_bias_correlation_max: 0.3
+  adjacency_bias_max_percent: 40.0
+
+sampling:
+  neighbor_sample_size: 100    # Segments to sample for analysis
+  neighbor_k: 10               # Top-k neighbors to retrieve
+  random_seed: 42              # For reproducibility
+```
+
+#### Integration with Pipeline
+
+Run quality assessment before expensive downstream operations:
+
+```bash
+# Standard pipeline with quality gate
+lakehouse ingest input/transcripts/
+lakehouse materialize --all
+
+# Quality assessment (blocks on RED status)
+lakehouse quality || exit 1
+
+# If GREEN/AMBER, proceed with downstream tasks
+./run_pair_generation.sh
+./run_labeling_workflow.sh
+```
+
+#### Use Cases
+
+1. **Pre-processing Validation**: Verify segmentation quality before generating embeddings
+2. **Embedding Validation**: Check for speaker leakage and length bias in embeddings
+3. **Parameter Tuning**: Use distribution metrics to tune segmentation parameters
+4. **Debugging**: Inspect outliers and neighbor samples to debug unexpected behavior
+5. **Quality Gates**: Implement automated quality gates in data pipelines
+6. **Baseline Tracking**: Compare quality metrics across different data versions
+
 ## Performance
 
 ### Ingestion Speed

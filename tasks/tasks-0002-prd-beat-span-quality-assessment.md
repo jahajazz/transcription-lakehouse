@@ -167,7 +167,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 5.6.6 Implement reproducibility (FR-51, FR-52): fixed random seed, consistent rounding to 2-3 decimal places
     - [x] 5.6.7 Implement graceful handling of missing embeddings (FR-50): skip embedding checks, report in summary
 
-- [ ] 6.0 Testing & Documentation
+- [x] 6.0 Testing & Documentation
   - [x] 6.1 Create test fixtures in `tests/fixtures/quality_test_data.py`:
     - [x] 6.1.1 Create sample episode metadata DataFrame
     - [x] 6.1.2 Create sample spans DataFrame with various edge cases (long, short, gaps, overlaps)
@@ -189,14 +189,14 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 6.3.4 Test CLI command execution with various options
     - [x] 6.3.5 Test graceful handling of missing embeddings
     - [x] 6.3.6 Test threshold override via command line
-  - [ ] 6.4 Add docstrings and type hints:
-    - [ ] 6.4.1 Add comprehensive docstrings to all public functions and classes
-    - [ ] 6.4.2 Add type hints to all function signatures
-    - [ ] 6.4.3 Add module-level docstrings explaining purpose and usage
-  - [ ] 6.5 Update project documentation:
-    - [ ] 6.5.1 Add quality assessment section to README.md with usage examples
-    - [ ] 6.5.2 Document threshold configuration in config/quality_thresholds.yaml with comments
-    - [ ] 6.5.3 Add example output snippets showing report format
+  - [x] 6.4 Add docstrings and type hints:
+    - [x] 6.4.1 Add comprehensive docstrings to all public functions and classes
+    - [x] 6.4.2 Add type hints to all function signatures
+    - [x] 6.4.3 Add module-level docstrings explaining purpose and usage
+  - [x] 6.5 Update project documentation:
+    - [x] 6.5.1 Add quality assessment section to README.md with usage examples
+    - [x] 6.5.2 Document threshold configuration in config/quality_thresholds.yaml with comments
+    - [x] 6.5.3 Add example output snippets showing report format
 
 ---
 
