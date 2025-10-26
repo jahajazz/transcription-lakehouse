@@ -47,7 +47,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `config/quality_thresholds.yaml` - Default threshold configuration
 - `tests/test_quality_metrics.py` - Unit tests for metrics calculators
 - `tests/test_quality_assessment.py` - Integration tests for full assessment
-- `tests/fixtures/quality_test_data.py` - Test data fixtures for quality tests
+- ✅ `tests/fixtures/quality_test_data.py` - Test data fixtures for quality tests
 
 ### Files to Modify
 - `src/lakehouse/cli/__init__.py` - Import quality command to register it
@@ -168,12 +168,12 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 5.6.7 Implement graceful handling of missing embeddings (FR-50): skip embedding checks, report in summary
 
 - [ ] 6.0 Testing & Documentation
-  - [ ] 6.1 Create test fixtures in `tests/fixtures/quality_test_data.py`:
-    - [ ] 6.1.1 Create sample episode metadata DataFrame
-    - [ ] 6.1.2 Create sample spans DataFrame with various edge cases (long, short, gaps, overlaps)
-    - [ ] 6.1.3 Create sample beats DataFrame
-    - [ ] 6.1.4 Create sample embeddings arrays
-    - [ ] 6.1.5 Create helper functions to generate test data with controlled properties
+  - [x] 6.1 Create test fixtures in `tests/fixtures/quality_test_data.py`:
+    - [x] 6.1.1 Create sample episode metadata DataFrame
+    - [x] 6.1.2 Create sample spans DataFrame with various edge cases (long, short, gaps, overlaps)
+    - [x] 6.1.3 Create sample beats DataFrame
+    - [x] 6.1.4 Create sample embeddings arrays
+    - [x] 6.1.5 Create helper functions to generate test data with controlled properties
   - [ ] 6.2 Create unit tests in `tests/test_quality_metrics.py`:
     - [ ] 6.2.1 Test coverage metrics: episode coverage calculation, gap/overlap detection, threshold validation
     - [ ] 6.2.2 Test distribution metrics: duration statistics, length compliance, histogram generation
