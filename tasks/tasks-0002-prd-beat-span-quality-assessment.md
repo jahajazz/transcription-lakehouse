@@ -45,7 +45,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
 - ✅ `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
 - ✅ `config/quality_thresholds.yaml` - Default threshold configuration
-- `tests/test_quality_metrics.py` - Unit tests for metrics calculators
+- ✅ `tests/test_quality_metrics.py` - Unit tests for metrics calculators
 - `tests/test_quality_assessment.py` - Integration tests for full assessment
 - ✅ `tests/fixtures/quality_test_data.py` - Test data fixtures for quality tests
 
@@ -174,14 +174,14 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 6.1.3 Create sample beats DataFrame
     - [x] 6.1.4 Create sample embeddings arrays
     - [x] 6.1.5 Create helper functions to generate test data with controlled properties
-  - [ ] 6.2 Create unit tests in `tests/test_quality_metrics.py`:
-    - [ ] 6.2.1 Test coverage metrics: episode coverage calculation, gap/overlap detection, threshold validation
-    - [ ] 6.2.2 Test distribution metrics: duration statistics, length compliance, histogram generation
-    - [ ] 6.2.3 Test integrity metrics: monotonicity check, integrity violations, duplicate detection
-    - [ ] 6.2.4 Test balance metrics: speaker distribution, series balance
-    - [ ] 6.2.5 Test text quality metrics: token counts, lexical density, top terms extraction
-    - [ ] 6.2.6 Test embedding metrics: neighbor search, leakage detection, bias calculations
-    - [ ] 6.2.7 Test diagnostics: outlier identification, neighbor sampling, CSV export formatting
+  - [x] 6.2 Create unit tests in `tests/test_quality_metrics.py`:
+    - [x] 6.2.1 Test coverage metrics: episode coverage calculation, gap/overlap detection, threshold validation
+    - [x] 6.2.2 Test distribution metrics: duration statistics, length compliance, histogram generation
+    - [x] 6.2.3 Test integrity metrics: monotonicity check, integrity violations, duplicate detection
+    - [x] 6.2.4 Test balance metrics: speaker distribution, series balance
+    - [x] 6.2.5 Test text quality metrics: token counts, lexical density, top terms extraction
+    - [x] 6.2.6 Test embedding metrics: neighbor search, leakage detection, bias calculations
+    - [x] 6.2.7 Test diagnostics: outlier identification, neighbor sampling, CSV export formatting
   - [ ] 6.3 Create integration tests in `tests/test_quality_assessment.py`:
     - [ ] 6.3.1 Test full assessment run with sample data
     - [ ] 6.3.2 Test output file generation (JSON, CSV, Markdown)
