@@ -1261,7 +1261,16 @@ def calculate_lexical_similarity(
     }
     
     # Tokenize and normalize
-    def tokenize(text):
+    def tokenize(text: str) -> List[str]:
+        """
+        Tokenize and normalize text for lexical similarity calculation.
+        
+        Args:
+            text: Input text to tokenize
+        
+        Returns:
+            List of normalized tokens (lowercase, punctuation stripped, stopwords removed)
+        """
         words = text.lower().split()
         # Filter: remove stopwords and short words
         filtered = [

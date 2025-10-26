@@ -426,8 +426,16 @@ def detect_duplicates(
         id_col = '_temp_id'
     
     # Normalize text for exact duplicate detection
-    def normalize_text(text):
-        """Normalize text: lowercase, strip, collapse whitespace"""
+    def normalize_text(text: Any) -> str:
+        """
+        Normalize text: lowercase, strip, collapse whitespace.
+        
+        Args:
+            text: Input text (can be string or any type)
+        
+        Returns:
+            Normalized text string
+        """
         if pd.isna(text):
             return ""
         # Convert to string, lowercase, strip
