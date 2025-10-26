@@ -46,7 +46,7 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
 - ✅ `config/quality_thresholds.yaml` - Default threshold configuration
 - ✅ `tests/test_quality_metrics.py` - Unit tests for metrics calculators
-- `tests/test_quality_assessment.py` - Integration tests for full assessment
+- ✅ `tests/test_quality_assessment.py` - Integration tests for full assessment
 - ✅ `tests/fixtures/quality_test_data.py` - Test data fixtures for quality tests
 
 ### Files to Modify
@@ -182,13 +182,13 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 6.2.5 Test text quality metrics: token counts, lexical density, top terms extraction
     - [x] 6.2.6 Test embedding metrics: neighbor search, leakage detection, bias calculations
     - [x] 6.2.7 Test diagnostics: outlier identification, neighbor sampling, CSV export formatting
-  - [ ] 6.3 Create integration tests in `tests/test_quality_assessment.py`:
-    - [ ] 6.3.1 Test full assessment run with sample data
-    - [ ] 6.3.2 Test output file generation (JSON, CSV, Markdown)
-    - [ ] 6.3.3 Test reproducibility: same input produces same output (excluding timestamps)
-    - [ ] 6.3.4 Test CLI command execution with various options
-    - [ ] 6.3.5 Test graceful handling of missing embeddings
-    - [ ] 6.3.6 Test threshold override via command line
+  - [x] 6.3 Create integration tests in `tests/test_quality_assessment.py`:
+    - [x] 6.3.1 Test full assessment run with sample data
+    - [x] 6.3.2 Test output file generation (JSON, CSV, Markdown)
+    - [x] 6.3.3 Test reproducibility: same input produces same output (excluding timestamps)
+    - [x] 6.3.4 Test CLI command execution with various options
+    - [x] 6.3.5 Test graceful handling of missing embeddings
+    - [x] 6.3.6 Test threshold override via command line
   - [ ] 6.4 Add docstrings and type hints:
     - [ ] 6.4.1 Add comprehensive docstrings to all public functions and classes
     - [ ] 6.4.2 Add type hints to all function signatures
