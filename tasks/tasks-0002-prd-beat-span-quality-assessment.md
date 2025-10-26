@@ -40,10 +40,10 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
 - ✅ `src/lakehouse/quality/metrics/integrity.py` - Category C: Ordering & Integrity metrics
 - ✅ `src/lakehouse/quality/metrics/balance.py` - Category D: Speaker & Series Balance metrics
 - ✅ `src/lakehouse/quality/metrics/text_quality.py` - Category E: Text Quality Proxy metrics
-- `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
-- `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
-- `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
-- `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
+- ✅ `src/lakehouse/quality/metrics/embedding.py` - Category F: Embedding Sanity Checks
+- ✅ `src/lakehouse/quality/diagnostics.py` - Category G: Outliers & Sample audits
+- ✅ `src/lakehouse/quality/reporter.py` - Markdown report generation with ASCII visualizations
+- ✅ `src/lakehouse/cli/commands/quality.py` - CLI command for quality assessment
 - ✅ `config/quality_thresholds.yaml` - Default threshold configuration
 - `tests/test_quality_metrics.py` - Unit tests for metrics calculators
 - `tests/test_quality_assessment.py` - Integration tests for full assessment
@@ -99,73 +99,73 @@ Generated from: `0002-prd-beat-span-quality-assessment.md`
     - [x] 2.5.3 Implement `calculate_punctuation_ratio()` for text quality proxy
     - [x] 2.5.4 Implement `extract_top_terms()` for top 20 unigrams and bigrams (with stopword filtering)
 
-- [ ] 3.0 Embedding Sanity Checks (Category F)
-  - [ ] 3.1 Create `src/lakehouse/quality/metrics/embedding.py` with embedding utilities:
-    - [ ] 3.1.1 Implement `load_embeddings()` to read span/beat embeddings from parquet with graceful handling if missing
-    - [ ] 3.1.2 Implement `stratified_sample_segments()` for reproducible sampling by episode and speaker
-    - [ ] 3.1.3 Implement `compute_cosine_similarity()` using NumPy (with optional FAISS optimization)
-  - [ ] 3.2 Implement neighbor coherence analysis (FR-23):
-    - [ ] 3.2.1 Implement `find_top_k_neighbors()` for each sampled segment
-    - [ ] 3.2.2 Implement `extract_neighbor_themes()` to summarize topic terms from neighbor texts
-    - [ ] 3.2.3 Return coherence assessment (coherent vs random neighbor themes)
-  - [ ] 3.3 Implement speaker and episode leakage detection (FR-24, FR-25):
-    - [ ] 3.3.1 Implement `calculate_speaker_leakage()` for % of neighbors sharing same speaker
-    - [ ] 3.3.2 Implement `calculate_episode_leakage()` for % of neighbors from same episode
-    - [ ] 3.3.3 Implement `validate_leakage_thresholds()` to check against max percentages
-  - [ ] 3.4 Implement length bias assessment (FR-26, FR-27):
-    - [ ] 3.4.1 Implement `calculate_embedding_norms()` (L2 norm per segment)
-    - [ ] 3.4.2 Implement `calculate_length_bias_correlation()` for duration vs norm and duration vs mean similarity
-    - [ ] 3.4.3 Implement `validate_length_bias_threshold()` to check correlation ≤ 0.3
-  - [ ] 3.5 Implement lexical vs embedding similarity alignment (FR-28):
-    - [ ] 3.5.1 Implement `sample_random_pairs()` for reproducible pair sampling
-    - [ ] 3.5.2 Implement `calculate_lexical_similarity()` using Jaccard or TF-IDF cosine
-    - [ ] 3.5.3 Implement `calculate_similarity_correlation()` between lexical and embedding similarities
-  - [ ] 3.6 Implement cross-series and adjacency bias checks (FR-29, FR-30, FR-31):
-    - [ ] 3.6.1 Implement `calculate_cross_series_neighbors()` for % neighbors from different series
-    - [ ] 3.6.2 Implement `calculate_adjacency_bias()` for % temporally adjacent neighbors (within 5s)
-    - [ ] 3.6.3 Implement `validate_adjacency_threshold()` to check ≤ 40% adjacency
+- [x] 3.0 Embedding Sanity Checks (Category F)
+  - [x] 3.1 Create `src/lakehouse/quality/metrics/embedding.py` with embedding utilities:
+    - [x] 3.1.1 Implement `load_embeddings()` to read span/beat embeddings from parquet with graceful handling if missing
+    - [x] 3.1.2 Implement `stratified_sample_segments()` for reproducible sampling by episode and speaker
+    - [x] 3.1.3 Implement `compute_cosine_similarity()` using NumPy (with optional FAISS optimization)
+  - [x] 3.2 Implement neighbor coherence analysis (FR-23):
+    - [x] 3.2.1 Implement `find_top_k_neighbors()` for each sampled segment
+    - [x] 3.2.2 Implement `extract_neighbor_themes()` to summarize topic terms from neighbor texts
+    - [x] 3.2.3 Return coherence assessment (coherent vs random neighbor themes)
+  - [x] 3.3 Implement speaker and episode leakage detection (FR-24, FR-25):
+    - [x] 3.3.1 Implement `calculate_speaker_leakage()` for % of neighbors sharing same speaker
+    - [x] 3.3.2 Implement `calculate_episode_leakage()` for % of neighbors from same episode
+    - [x] 3.3.3 Implement `validate_leakage_thresholds()` to check against max percentages
+  - [x] 3.4 Implement length bias assessment (FR-26, FR-27):
+    - [x] 3.4.1 Implement `calculate_embedding_norms()` (L2 norm per segment)
+    - [x] 3.4.2 Implement `calculate_length_bias_correlation()` for duration vs norm and duration vs mean similarity
+    - [x] 3.4.3 Implement `validate_length_bias_threshold()` to check correlation ≤ 0.3
+  - [x] 3.5 Implement lexical vs embedding similarity alignment (FR-28):
+    - [x] 3.5.1 Implement `sample_random_pairs()` for reproducible pair sampling
+    - [x] 3.5.2 Implement `calculate_lexical_similarity()` using Jaccard or TF-IDF cosine
+    - [x] 3.5.3 Implement `calculate_similarity_correlation()` between lexical and embedding similarities
+  - [x] 3.6 Implement cross-series and adjacency bias checks (FR-29, FR-30, FR-31):
+    - [x] 3.6.1 Implement `calculate_cross_series_neighbors()` for % neighbors from different series
+    - [x] 3.6.2 Implement `calculate_adjacency_bias()` for % temporally adjacent neighbors (within 5s)
+    - [x] 3.6.3 Implement `validate_adjacency_threshold()` to check ≤ 40% adjacency
 
-- [ ] 4.0 Diagnostics & Outlier Detection (Category G)
-  - [ ] 4.1 Create `src/lakehouse/quality/diagnostics.py` implementing FR-32, FR-33, FR-34:
-    - [ ] 4.1.1 Implement `identify_outliers()` to find longest, shortest, most isolated, most hubby segments
-    - [ ] 4.1.2 Implement `sample_neighbor_lists()` for random sample of query segments with their neighbors
-    - [ ] 4.1.3 Implement `format_text_excerpt()` to truncate text to 100 chars with "..." and CSV escaping
-    - [ ] 4.1.4 Implement `export_outliers_csv()` to write outliers.csv with ID, episode, speaker, duration, text, metric
-    - [ ] 4.1.5 Implement `export_neighbors_csv()` to write neighbors_sample.csv with query and neighbor details
+- [x] 4.0 Diagnostics & Outlier Detection (Category G)
+  - [x] 4.1 Create `src/lakehouse/quality/diagnostics.py` implementing FR-32, FR-33, FR-34:
+    - [x] 4.1.1 Implement `identify_outliers()` to find longest, shortest, most isolated, most hubby segments
+    - [x] 4.1.2 Implement `sample_neighbor_lists()` for random sample of query segments with their neighbors
+    - [x] 4.1.3 Implement `format_text_excerpt()` to truncate text to 100 chars with "..." and CSV escaping
+    - [x] 4.1.4 Implement `export_outliers_csv()` to write outliers.csv with ID, episode, speaker, duration, text, metric
+    - [x] 4.1.5 Implement `export_neighbors_csv()` to write neighbors_sample.csv with query and neighbor details
 
 - [ ] 5.0 Report Generation & CLI Integration
-  - [ ] 5.1 Create `src/lakehouse/quality/reporter.py` implementing FR-35 through FR-40:
-    - [ ] 5.1.1 Implement `QualityReporter` class with `generate_markdown_report()` method
-    - [ ] 5.1.2 Implement `generate_executive_summary()` with RAG status, timestamp, counts, failures
-    - [ ] 5.1.3 Implement `determine_rag_status()` logic (Green: all pass, Amber: 1-2 non-critical, Red: multiple/critical failures)
-    - [ ] 5.1.4 Implement `generate_ascii_histogram()` for duration distributions using block characters
-    - [ ] 5.1.5 Implement report sections: Configuration, Coverage, Distribution, Integrity, Balance, Text Quality, Embedding, Outliers
-    - [ ] 5.1.6 Implement `generate_findings_and_remediation()` with specific recommendations for each failed threshold
-    - [ ] 5.1.7 Implement `generate_go_nogo_recommendation()` based on overall status
-  - [ ] 5.2 Implement metrics export (FR-4, FR-5, FR-6):
-    - [ ] 5.2.1 Implement `export_global_metrics_json()` for metrics/global.json
-    - [ ] 5.2.2 Implement `export_episodes_csv()` for metrics/episodes.csv with per-episode stats
-    - [ ] 5.2.3 Implement `export_segments_csv()` for metrics/spans.csv and metrics/beats.csv with flags
-  - [ ] 5.3 Create output directory structure (FR-48, FR-49):
-    - [ ] 5.3.1 Implement `create_output_structure()` to create timestamped directories (metrics/, diagnostics/, report/)
-    - [ ] 5.3.2 Ensure proper directory creation and error handling
-  - [ ] 5.4 Create `src/lakehouse/cli/commands/quality.py` implementing FR-1, FR-2:
-    - [ ] 5.4.1 Create `quality` command with @cli.command() decorator and common options
-    - [ ] 5.4.2 Add CLI options: --version, --level (spans/beats/all), --output-dir, --sample-size, --config
-    - [ ] 5.4.3 Add threshold override options: --coverage-min, --span-length-min, --span-length-max, --beat-length-min, --beat-length-max, --neighbor-k
-    - [ ] 5.4.4 Implement command function to instantiate QualityAssessor and run assessment
-    - [ ] 5.4.5 Implement console summary output with Rich (FR-40): RAG status, key metrics, failures, file paths
-    - [ ] 5.4.6 Add progress indicators using Rich Progress for long-running operations
-  - [ ] 5.5 Integrate quality command into CLI (modify `src/lakehouse/cli/__init__.py`):
-    - [ ] 5.5.1 Import quality command in main() function to register it
-  - [ ] 5.6 Implement main assessment orchestration in `src/lakehouse/quality/assessor.py`:
-    - [ ] 5.6.1 Implement `QualityAssessor.run_assessment()` to coordinate all metric calculations
-    - [ ] 5.6.2 Implement data loading from lakehouse paths (FR-3): episodes, spans, beats, embeddings
-    - [ ] 5.6.3 Implement threshold loading from config with CLI overrides
-    - [ ] 5.6.4 Call all metric calculators (coverage, distribution, integrity, balance, text_quality, embedding, diagnostics)
-    - [ ] 5.6.5 Aggregate results into MetricsBundle
-    - [ ] 5.6.6 Implement reproducibility (FR-51, FR-52): fixed random seed, consistent rounding to 2-3 decimal places
-    - [ ] 5.6.7 Implement graceful handling of missing embeddings (FR-50): skip embedding checks, report in summary
+  - [x] 5.1 Create `src/lakehouse/quality/reporter.py` implementing FR-35 through FR-40:
+    - [x] 5.1.1 Implement `QualityReporter` class with `generate_markdown_report()` method
+    - [x] 5.1.2 Implement `generate_executive_summary()` with RAG status, timestamp, counts, failures
+    - [x] 5.1.3 Implement `determine_rag_status()` logic (Green: all pass, Amber: 1-2 non-critical, Red: multiple/critical failures)
+    - [x] 5.1.4 Implement `generate_ascii_histogram()` for duration distributions using block characters
+    - [x] 5.1.5 Implement report sections: Configuration, Coverage, Distribution, Integrity, Balance, Text Quality, Embedding, Outliers
+    - [x] 5.1.6 Implement `generate_findings_and_remediation()` with specific recommendations for each failed threshold
+    - [x] 5.1.7 Implement `generate_go_nogo_recommendation()` based on overall status
+  - [x] 5.2 Implement metrics export (FR-4, FR-5, FR-6):
+    - [x] 5.2.1 Implement `export_global_metrics_json()` for metrics/global.json
+    - [x] 5.2.2 Implement `export_episodes_csv()` for metrics/episodes.csv with per-episode stats
+    - [x] 5.2.3 Implement `export_segments_csv()` for metrics/spans.csv and metrics/beats.csv with flags
+  - [x] 5.3 Create output directory structure (FR-48, FR-49):
+    - [x] 5.3.1 Implement `create_output_structure()` to create timestamped directories (metrics/, diagnostics/, report/)
+    - [x] 5.3.2 Ensure proper directory creation and error handling
+  - [x] 5.4 Create `src/lakehouse/cli/commands/quality.py` implementing FR-1, FR-2:
+    - [x] 5.4.1 Create `quality` command with @cli.command() decorator and common options
+    - [x] 5.4.2 Add CLI options: --version, --level (spans/beats/all), --output-dir, --sample-size, --config
+    - [x] 5.4.3 Add threshold override options: --coverage-min, --span-length-min, --span-length-max, --beat-length-min, --beat-length-max, --neighbor-k
+    - [x] 5.4.4 Implement command function to instantiate QualityAssessor and run assessment
+    - [x] 5.4.5 Implement console summary output with Rich (FR-40): RAG status, key metrics, failures, file paths
+    - [x] 5.4.6 Add progress indicators using Rich Progress for long-running operations
+  - [x] 5.5 Integrate quality command into CLI (modify `src/lakehouse/cli/__init__.py`):
+    - [x] 5.5.1 Import quality command in main() function to register it
+  - [x] 5.6 Implement main assessment orchestration in `src/lakehouse/quality/assessor.py`:
+    - [x] 5.6.1 Implement `QualityAssessor.run_assessment()` to coordinate all metric calculations
+    - [x] 5.6.2 Implement data loading from lakehouse paths (FR-3): episodes, spans, beats, embeddings
+    - [x] 5.6.3 Implement threshold loading from config with CLI overrides
+    - [x] 5.6.4 Call all metric calculators (coverage, distribution, integrity, balance, text_quality, embedding, diagnostics)
+    - [x] 5.6.5 Aggregate results into MetricsBundle
+    - [x] 5.6.6 Implement reproducibility (FR-51, FR-52): fixed random seed, consistent rounding to 2-3 decimal places
+    - [x] 5.6.7 Implement graceful handling of missing embeddings (FR-50): skip embedding checks, report in summary
 
 - [ ] 6.0 Testing & Documentation
   - [ ] 6.1 Create test fixtures in `tests/fixtures/quality_test_data.py`:

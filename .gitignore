@@ -145,7 +145,8 @@ cython_debug/
 
 # Lakehouse data artifacts (runtime-generated directories)
 # These should NOT be committed as they are user-generated data
-lakehouse/
+# Note: src/lakehouse/ contains source code and should NOT be ignored
+/lakehouse/
 transcript-lakehouse/
 lakehouse-data/
 data/lakehouse/
