@@ -60,118 +60,183 @@ Core dependencies:
 
 ## Quick Start
 
-### 1. Ingest Transcripts
+### Complete Workflow (Start to Finish)
+
+Follow these steps to build a lakehouse from scratch:
+
+#### **1. Ingest Transcripts** (Required)
+
+Ingest transcript files into the lakehouse. **Requires a directory path**, not a single file.
 
 ```bash
-# Ingest a single transcript
-lakehouse ingest input/transcripts/episode.jsonl
-
-# Ingest all transcripts from a directory
+# Initial ingestion - process all transcripts in directory
 lakehouse ingest input/transcripts/
+
+# Incremental ingestion - process only NEW episodes (skip existing)
+# Use --incremental for subsequent runs to avoid re-processing
+lakehouse ingest input/transcripts/ --incremental
+
+# Auto-update catalogs after ingestion (optional but recommended)
+lakehouse ingest input/transcripts/ --incremental --update-catalog
 ```
 
-### 2. Materialize Derived Artifacts
+**Options:**
+- `--incremental` - Skip episodes already in lakehouse (recommended for updates)
+- `--update-catalog` - Regenerate episode/speaker catalogs after ingestion
+- `--pattern "*.jsonl"` - Filter files by pattern (default: *.jsonl)
+- `--dry-run` - Validate inputs without writing
+
+---
+
+#### **2. Materialize Derived Artifacts** (Required)
+
+Generate aggregations, embeddings, and search indices:
 
 ```bash
-# Generate all artifacts (aggregations + embeddings + indices)
+# Generate all artifacts (recommended)
 lakehouse materialize --all
-
-# Or generate specific artifacts only
-lakehouse materialize --spans-only
-lakehouse materialize --beats-only
-lakehouse materialize --sections-only
-lakehouse materialize --embeddings-only
-lakehouse materialize --indices-only
-
-# Combine multiple steps
-lakehouse materialize --spans-only --beats-only --embeddings-only
 ```
 
-The `materialize` command generates:
-- **Aggregations**: Spans (speaker-contiguous) → Beats (semantic units) → Sections (5-12 min blocks)
+This creates:
+- **Spans**: Speaker-contiguous utterance groups
+- **Beats**: Semantic meaning units
+- **Sections**: 5-12 minute episode segments
 - **Embeddings**: Vector representations for spans and beats
 - **Indices**: FAISS ANN indices for semantic search
 
-### 3. Validate Data
-
+**Advanced:** Generate specific artifacts only:
 ```bash
-# Run validation checks
-lakehouse validate
-
-# Run with detailed output
-lakehouse validate --detailed
-
-# Save validation report
-lakehouse validate --save-report --output-format json
+lakehouse materialize --spans-only --beats-only
+lakehouse materialize --embeddings-only --indices-only
 ```
 
-### 4. Generate Catalogs
+---
+
+#### **3. Validate Data** (Recommended)
+
+Run basic data integrity checks:
+
+```bash
+# Quick validation check
+lakehouse validate
+
+# Detailed validation with report
+lakehouse validate --save-report --detailed
+```
+
+Validates: schema compliance, timestamps, IDs, referential integrity, text quality.
+
+---
+
+#### **4. Generate Catalogs** (Recommended)
+
+Create metadata catalogs for episodes, speakers, and schemas:
 
 ```bash
 # Generate all catalogs (default)
 lakehouse catalog
 
-# Generate specific catalog type
-lakehouse catalog --catalog-type episodes
-lakehouse catalog --catalog-type speakers
-lakehouse catalog --catalog-type schema
-
 # Save catalogs to files
-lakehouse catalog --save-catalog --output-format json
+lakehouse catalog --save-catalog
 
-# Show detailed episode information
-lakehouse catalog --episode-id "SW - #001 - 2018-05-18 - Resurrection of Logos"
-
-# Show speaker rankings
-lakehouse catalog --rankings
+# View specific catalog
+lakehouse catalog --catalog-type episodes --detailed
 ```
 
-### 5. Run Quality Assessment
+**Note:** If you used `--update-catalog` during ingestion, this step is optional.
+
+---
+
+#### **5. Run Quality Assessment** (Recommended)
+
+Comprehensive quality analysis with detailed reporting:
 
 ```bash
-# Run comprehensive quality assessment
-lakehouse quality assess
+# Full quality assessment
+lakehouse quality
 
-# Quality checks include:
-# - Data integrity validation
-# - Embedding quality metrics
-# - Duplicate detection
-# - Statistical analysis
+# Custom thresholds
+lakehouse quality --coverage-min 95.0 --sample-size 500
+
+# Save detailed report
+lakehouse quality --output-dir quality_reports/
 ```
 
-### 6. Create Snapshots
+Quality checks include:
+- Data integrity validation
+- Embedding quality metrics
+- Duplicate detection (exact and near-duplicates)
+- Statistical analysis
+- Length distributions and coverage
 
-Create versioned, immutable snapshots for sharing or migration:
+**Note:** Near-duplicate detection automatically skips for datasets >10,000 segments (performance).
+
+---
+
+#### **6. Create Snapshot** (Required for sharing/migration)
+
+Create versioned, immutable snapshot for external consumption:
 
 ```bash
-# Create a snapshot with default version
+# Create snapshot with auto-versioning
 lakehouse snapshot create
 
 # Create with specific version
-lakehouse snapshot create --version 0.9.0-provisional
+lakehouse snapshot create --version 1.0.0-provisional
 
-# Create with custom snapshot location
+# Custom snapshot location
 lakehouse snapshot create --snapshot-root /data/snapshots
 ```
 
-**Configure snapshot locations** in `config/snapshot_config.yaml`:
+**Configure snapshot paths** in `config/snapshot_config.yaml`:
 
 ```yaml
-# Where to create snapshots (producer)
-snapshot_root: "D:/lakehouse/snapshots"
+# Producer settings - where to CREATE snapshots
+snapshot_root: "${SNAPSHOT_ROOT:-./snapshots}"
+# Can also use fixed path: "D:/lakehouse/snapshots"
 
-# Which snapshot to use (consumer)
-lake_root: "D:/lakehouse/snapshots/v0.9.0-provisional"
+# Consumer settings - where to READ snapshots from
+lake_root: "${LAKE_ROOT}"
+# Can also use fixed path: "D:/lakehouse/snapshots/v1.0.0-provisional"
 ```
 
-The snapshot includes:
+**Snapshot includes:**
 - ✅ All consumer-facing artifacts (spans, beats, sections, embeddings, indexes, catalogs)
-- ✅ Comprehensive manifest with checksums and metadata
+- ✅ Comprehensive `lake_manifest.json` with checksums and metadata
 - ✅ QA status tracking (PASS/FAIL/UNKNOWN)
 - ✅ Automatic validation and integrity checks
-- ✅ Platform-specific usage instructions
+- ✅ Platform-specific usage instructions in `snapshot_note.txt`
+
+**Environment Variables (Alternative):**
+```bash
+# Set snapshot creation location
+export SNAPSHOT_ROOT=/data/snapshots
+
+# Set snapshot consumption location (for consumers in other repos)
+export LAKE_ROOT=/data/snapshots/v1.0.0-provisional
+```
 
 See `docs/snapshot-setup.md` for complete configuration guide.
+
+---
+
+### Minimal Workflow (Regular Updates)
+
+For incremental updates after initial setup:
+
+```bash
+# 1. Ingest new transcripts only
+lakehouse ingest input/transcripts/ --incremental --update-catalog
+
+# 2. Generate all artifacts
+lakehouse materialize --all
+
+# 3. Quality check
+lakehouse quality
+
+# 4. Create snapshot
+lakehouse snapshot create
+```
 
 ## Architecture
 
@@ -287,11 +352,11 @@ Options:
   --help                       Show this message and exit
 ```
 
-#### `lakehouse quality assess`
+#### `lakehouse quality`
 Run comprehensive quality assessment on lakehouse data.
 
 ```bash
-lakehouse quality assess [OPTIONS]
+lakehouse quality [OPTIONS]
 
 Options:
   --lakehouse-path PATH        Path to lakehouse directory [default: ./lakehouse]
