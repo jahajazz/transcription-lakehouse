@@ -7,6 +7,7 @@ Implements PRD requirements FR-1, FR-2, FR-40.
 """
 
 import click
+import sys
 from pathlib import Path
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
@@ -89,6 +90,11 @@ logger = get_default_logger()
     is_flag=True,
     help='Disable timestamped output directories',
 )
+@click.option(
+    '--force-duplicate-check',
+    is_flag=True,
+    help='Force near-duplicate detection even for large datasets (>10k segments). Warning: may be slow.',
+)
 def quality(
     lakehouse_path,
     config_dir,
@@ -105,6 +111,7 @@ def quality(
     beat_length_max,
     neighbor_k,
     no_timestamp,
+    force_duplicate_check,
 ):
     """
     Run comprehensive quality assessment on lakehouse data.
@@ -136,6 +143,9 @@ def quality(
         
         # Large sample for detailed embedding analysis
         lakehouse quality --sample-size 500 --neighbor-k 20
+        
+        # Force near-duplicate detection on large datasets (may be slow)
+        lakehouse quality --force-duplicate-check
     """
     # Configure logging
     configure_logging(log_level)
@@ -198,6 +208,7 @@ def quality(
                 assess_beats=(level in ['beats', 'all']),
                 output_dir=output_dir,
                 use_timestamp=(not no_timestamp),
+                force_near_duplicate_check=force_duplicate_check,
             )
             
             progress.update(task, completed=True)
@@ -208,23 +219,23 @@ def quality(
         # Exit with appropriate code
         if result.rag_status == RAGStatus.RED:
             console.print("\n[bold red]❌ Assessment FAILED - Critical issues detected[/bold red]")
-            raise click.Exit(1)
+            sys.exit(1)
         elif result.rag_status == RAGStatus.AMBER:
             console.print("\n[bold yellow]⚠️  Assessment completed with WARNINGS[/bold yellow]")
-            raise click.Exit(0)
+            sys.exit(0)
         else:
             console.print("\n[bold green]✅ Assessment PASSED - All checks passed[/bold green]")
-            raise click.Exit(0)
+            sys.exit(0)
     
     except FileNotFoundError as e:
         console.print(f"\n[bold red]Error:[/bold red] {e}")
         logger.error(f"File not found: {e}")
-        raise click.Exit(1)
+        sys.exit(1)
     
     except Exception as e:
         console.print(f"\n[bold red]Error during quality assessment:[/bold red] {e}")
         logger.exception("Quality assessment failed")
-        raise click.Exit(1)
+        sys.exit(1)
 
 
 def _display_configuration(

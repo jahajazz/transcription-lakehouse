@@ -13,7 +13,7 @@ version:
 # Snapshot root directory - where snapshots will be SAVED/CREATED
 # This is used by: lakehouse snapshot create
 # Supports environment variable expansion: ${VAR_NAME:-default}
-snapshot_root: "${SNAPSHOT_ROOT:-./snapshots}"
+snapshot_root: "C:/Users/kylej/Cursor Projects/LAKE_ROOT"
 
 # Auto-increment patch version on collision
 auto_increment: true
@@ -28,7 +28,7 @@ provisional_suffix: "-provisional"
 # Lake root directory - where snapshots will be READ FROM
 # This is used by consuming applications/tools to read snapshot data
 # Supports environment variable expansion: ${VAR_NAME:-default}
-lake_root: "${LAKE_ROOT}"
+lake_root: "C:/Users/kylej/Cursor Projects/LAKE_ROOT"
 
 # ============================================================
 # EXAMPLES

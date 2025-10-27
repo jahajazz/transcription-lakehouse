@@ -1,5 +1,31 @@
 # Transcript Lakehouse - Quick Start Guide
 
+## Quick Reference - Complete Workflow
+
+From a fresh PowerShell session:
+
+```powershell
+# Navigate to project directory
+cd "C:\Users\kylej\Cursor Projects\TranscriptionLakehouse"
+
+# Start environment (activates venv + sets UTF-8)
+.\start-lakehouse.ps1
+
+# Run the complete workflow
+lakehouse ingest input/transcripts/             # Ingest transcript data
+lakehouse materialize --all                     # Generate all artifacts
+lakehouse quality                               # Run quality assessment
+lakehouse catalog --save-catalog                # Generate catalogs
+lakehouse snapshot create                       # Create versioned snapshot
+
+# Optional: Force near-duplicate check (slow for large datasets)
+lakehouse quality --force-duplicate-check
+```
+
+**That's it!** The `start-lakehouse.ps1` script handles environment activation and encoding setup for you.
+
+---
+
 ## Installation
 
 From the project root directory:

@@ -86,7 +86,8 @@ class SchemaManifest:
                         "name": field.name,
                         "type": str(field.type),
                         "nullable": field.nullable,
-                        "metadata": dict(field.metadata) if field.metadata else {}
+                        # Convert metadata to JSON string to avoid empty struct issues in Parquet
+                        "metadata": str(dict(field.metadata)) if field.metadata else None
                     }
                     field_details.append(field_info)
                 
@@ -105,7 +106,8 @@ class SchemaManifest:
                     "schema_fields": len(field_names),
                     "field_names": ", ".join(field_names),
                     "schema_definition": str(schema),
-                    "field_details": field_details,
+                    # Convert field_details to JSON string to avoid struct type issues in Parquet
+                    "field_details_json": str(field_details),
                     "manifest_generated": datetime.now(),
                 }
                 
@@ -125,7 +127,8 @@ class SchemaManifest:
                     "schema_fields": 0,
                     "field_names": "",
                     "schema_definition": "",
-                    "field_details": [],
+                    # Use same field name as successful entries
+                    "field_details_json": "[]",
                     "manifest_generated": datetime.now(),
                     "error": str(e)
                 }

@@ -361,6 +361,7 @@ class QualityAssessor:
         assess_beats: bool = True,
         output_dir: Optional[Union[str, Path]] = None,
         use_timestamp: bool = True,
+        force_near_duplicate_check: bool = False,
     ) -> AssessmentResult:
         """
         Run comprehensive quality assessment (Task 5.6.1).
@@ -373,6 +374,7 @@ class QualityAssessor:
             assess_beats: Whether to assess beats (default: True)
             output_dir: Output directory for reports/exports (optional)
             use_timestamp: Whether to create timestamped subdirectory (default: True)
+            force_near_duplicate_check: Force near-duplicate detection for large datasets (default: False)
         
         Returns:
             AssessmentResult with metrics, violations, and RAG status
@@ -515,7 +517,8 @@ class QualityAssessor:
             violations_data = integrity.detect_integrity_violations(all_segments)
             duplicates_data = integrity.detect_duplicates(
                 all_segments,
-                fuzzy_threshold=self.thresholds.near_duplicate_threshold
+                fuzzy_threshold=self.thresholds.near_duplicate_threshold,
+                force_near_duplicate_check=force_near_duplicate_check
             )
             
             # Combine integrity metrics

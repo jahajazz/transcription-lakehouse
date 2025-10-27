@@ -355,6 +355,7 @@ def detect_duplicates(
     segments: pd.DataFrame,
     fuzzy_threshold: float = 0.95,
     segment_type: str = "segment",
+    force_near_duplicate_check: bool = False,
 ) -> Dict[str, Any]:
     """
     Detect exact and near-duplicate segments (FR-16).
@@ -367,6 +368,7 @@ def detect_duplicates(
         segments: DataFrame with segment data (must have text column)
         fuzzy_threshold: Similarity threshold for near-duplicates (0.0-1.0)
         segment_type: Type of segment for logging
+        force_near_duplicate_check: Force near-duplicate detection even for large datasets (>10k segments)
     
     Returns:
         Dictionary containing:
@@ -475,14 +477,18 @@ def detect_duplicates(
     if not RAPIDFUZZ_AVAILABLE:
         logger.info(f"rapidfuzz not available, skipping near-duplicate detection for {segment_type}s")
     else:
-        # TEMPORARY: Skip near-duplicate detection for large datasets (performance issue)
-        # TODO: Implement more efficient algorithm (e.g., LSH, MinHash, or sampling)
-        if len(segments_with_normalized) > 10000:
+        # Skip near-duplicate detection for large datasets unless forced
+        if len(segments_with_normalized) > 10000 and not force_near_duplicate_check:
             logger.warning(
                 f"Skipping near-duplicate detection for {len(segments_with_normalized)} {segment_type}s "
-                f"(too slow for O(n²) comparison). Use sampling or implement LSH for better performance."
+                f"(too slow for O(n²) comparison). Use --force-duplicate-check to override."
             )
         else:
+            if len(segments_with_normalized) > 10000:
+                logger.warning(
+                    f"Forcing near-duplicate detection for {len(segments_with_normalized)} {segment_type}s. "
+                    f"This may take a while (O(n²) complexity)..."
+                )
             # Only check segments that are not exact duplicates
             non_exact_duplicate_mask = ~segments_with_normalized.index.isin(exact_duplicate_indices)
             unique_segments = segments_with_normalized[non_exact_duplicate_mask].copy()
