@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple, Union
+from collections import Counter
 
 from lakehouse.logger import get_default_logger
 from lakehouse.quality.thresholds import QualityThresholds, ThresholdViolation

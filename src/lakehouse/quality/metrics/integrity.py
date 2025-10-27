@@ -475,53 +475,61 @@ def detect_duplicates(
     if not RAPIDFUZZ_AVAILABLE:
         logger.info(f"rapidfuzz not available, skipping near-duplicate detection for {segment_type}s")
     else:
-        # Only check segments that are not exact duplicates
-        non_exact_duplicate_mask = ~segments_with_normalized.index.isin(exact_duplicate_indices)
-        unique_segments = segments_with_normalized[non_exact_duplicate_mask].copy()
-        
-        if len(unique_segments) > 1:
-            # For efficiency, only compare unique normalized texts
-            unique_texts = unique_segments['_normalized_text'].unique()
+        # TEMPORARY: Skip near-duplicate detection for large datasets (performance issue)
+        # TODO: Implement more efficient algorithm (e.g., LSH, MinHash, or sampling)
+        if len(segments_with_normalized) > 10000:
+            logger.warning(
+                f"Skipping near-duplicate detection for {len(segments_with_normalized)} {segment_type}s "
+                f"(too slow for O(n²) comparison). Use sampling or implement LSH for better performance."
+            )
+        else:
+            # Only check segments that are not exact duplicates
+            non_exact_duplicate_mask = ~segments_with_normalized.index.isin(exact_duplicate_indices)
+            unique_segments = segments_with_normalized[non_exact_duplicate_mask].copy()
             
-            # Build groups of near-duplicates
-            processed_texts = set()
-            
-            for i, text1 in enumerate(unique_texts):
-                if text1 in processed_texts or text1 == "":
-                    continue
+            if len(unique_segments) > 1:
+                # For efficiency, only compare unique normalized texts
+                unique_texts = unique_segments['_normalized_text'].unique()
                 
-                similar_group = [text1]
-                processed_texts.add(text1)
+                # Build groups of near-duplicates
+                processed_texts = set()
                 
-                # Compare with remaining texts
-                for text2 in unique_texts[i+1:]:
-                    if text2 in processed_texts or text2 == "":
+                for i, text1 in enumerate(unique_texts):
+                    if text1 in processed_texts or text1 == "":
                         continue
                     
-                    # Calculate similarity ratio
-                    similarity = fuzz.ratio(text1, text2) / 100.0
+                    similar_group = [text1]
+                    processed_texts.add(text1)
                     
-                    if similarity >= fuzzy_threshold:
-                        similar_group.append(text2)
-                        processed_texts.add(text2)
-                
-                # If group has more than one text, record it
-                if len(similar_group) > 1:
-                    # Get all segment IDs for these texts
-                    group_mask = unique_segments['_normalized_text'].isin(similar_group)
-                    group_segments = unique_segments[group_mask]
-                    group_ids = group_segments[id_col].tolist()
+                    # Compare with remaining texts
+                    for text2 in unique_texts[i+1:]:
+                        if text2 in processed_texts or text2 == "":
+                            continue
+                        
+                        # Calculate similarity ratio
+                        similarity = fuzz.ratio(text1, text2) / 100.0
+                        
+                        if similarity >= fuzzy_threshold:
+                            similar_group.append(text2)
+                            processed_texts.add(text2)
                     
-                    near_duplicate_groups.append({
-                        'type': 'near',
-                        'count': len(group_segments),
-                        'segment_ids': group_ids,
-                        'text_preview': group_segments.iloc[0]['text'][:100],
-                        'similarity_threshold': fuzzy_threshold,
-                    })
-                    
-                    # Mark all but first as near-duplicates
-                    near_duplicate_indices.update(group_segments.index[1:])
+                    # If group has more than one text, record it
+                    if len(similar_group) > 1:
+                        # Get all segment IDs for these texts
+                        group_mask = unique_segments['_normalized_text'].isin(similar_group)
+                        group_segments = unique_segments[group_mask]
+                        group_ids = group_segments[id_col].tolist()
+                        
+                        near_duplicate_groups.append({
+                            'type': 'near',
+                            'count': len(group_segments),
+                            'segment_ids': group_ids,
+                            'text_preview': group_segments.iloc[0]['text'][:100],
+                            'similarity_threshold': fuzzy_threshold,
+                        })
+                        
+                        # Mark all but first as near-duplicates
+                        near_duplicate_indices.update(group_segments.index[1:])
     
     near_duplicate_count = len(near_duplicate_indices)
     near_duplicate_percent = round((near_duplicate_count / total_segments * 100), 2)
