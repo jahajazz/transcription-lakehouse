@@ -63,16 +63,16 @@
   - [x] 1.10 Test that invalid configs (missing keys) fail fast with clear error messages
 
 - [ ] 2.0 Implement Semantic Section Generation (R2)
-  - [ ] 2.1 Update `SECTION_SCHEMA` in `src/lakehouse/schemas.py` to add `title` (string, non-null) and `synopsis` (string, nullable) fields
-  - [ ] 2.2 Load beat embeddings in `SectionGenerator._generate_sections_for_episode()` to enable semantic boundary detection
-  - [ ] 2.3 Update `SectionGenerator._should_break_section()` to use beat embedding similarity for topic change detection
-  - [ ] 2.4 Add configuration parameters to `config/aggregation_config.yaml` for semantic section generation (min_similarity_drop, prefer_semantic_boundaries)
-  - [ ] 2.5 Implement simple section title generation (e.g., "Section 1", "Section 2" or extract from first beat text)
-  - [ ] 2.6 Add optional synopsis generation (can be placeholder "Auto-generated" for now)
-  - [ ] 2.7 Ensure sections use similarity-based boundaries rather than fixed time windows
-  - [ ] 2.8 Update `tests/test_aggregation.py` to verify multiple sections are generated per episode
-  - [ ] 2.9 Test that all beats are assigned to exactly one section (no gaps or overlaps)
-  - [ ] 2.10 Verify sections are chronologically ordered within episodes
+  - [x] 2.1 Update `SECTION_SCHEMA` in `src/lakehouse/schemas.py` to add `title` (string, non-null) and `synopsis` (string, nullable) fields
+  - [x] 2.2 Load beat embeddings in `SectionGenerator._generate_sections_for_episode()` to enable semantic boundary detection
+  - [x] 2.3 Update `SectionGenerator._should_break_section()` to use beat embedding similarity for topic change detection
+  - [x] 2.4 Add configuration parameters to `config/aggregation_config.yaml` for semantic section generation (min_similarity_drop, prefer_semantic_boundaries)
+  - [x] 2.5 Implement simple section title generation (e.g., "Section 1", "Section 2" or extract from first beat text)
+  - [x] 2.6 Add optional synopsis generation (can be placeholder "Auto-generated" for now)
+  - [x] 2.7 Ensure sections use similarity-based boundaries rather than fixed time windows
+  - [x] 2.8 Update `tests/test_aggregation.py` to verify multiple sections are generated per episode
+  - [x] 2.9 Test that all beats are assigned to exactly one section (no gaps or overlaps)
+  - [x] 2.10 Verify sections are chronologically ordered within episodes
 
 - [ ] 3.0 Implement Validator Routing System (R3)
   - [ ] 3.1 Create `config/validator_routing.yaml` with table role definitions (base vs embedding) and check assignments

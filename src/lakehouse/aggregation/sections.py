@@ -5,12 +5,15 @@ Creates 5-12 minute logical blocks from beats, balancing time constraints
 with semantic coherence. Sections represent major segments of an episode.
 """
 
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 import numpy as np
+import pandas as pd
 
 from lakehouse.aggregation.base import BeatAggregator
 from lakehouse.ids import generate_section_id
 from lakehouse.logger import get_default_logger
+from lakehouse.structure import LakehouseStructure
 
 
 logger = get_default_logger()
@@ -36,7 +39,10 @@ class SectionGenerator(BeatAggregator):
                 - max_duration_minutes: Maximum section duration (default: 12.0)
                 - allow_semantic_overflow: Allow exceeding max for semantics (default: True)
                 - boundary_similarity_threshold: Similarity threshold (default: 0.5)
+                - strong_boundary_multiplier: Multiplier for strong boundaries (default: 0.6)
+                - semantic_check_multiplier: Min duration multiplier for semantic checks (default: 1.5)
                 - prefer_time_boundaries: Prefer time over semantics (default: False)
+                - prefer_semantic_boundaries: Use embeddings for boundaries (default: True)
         """
         super().__init__(config)
         
@@ -46,7 +52,10 @@ class SectionGenerator(BeatAggregator):
         self.max_duration_minutes = self.config.get("max_duration_minutes", 12.0)
         self.allow_semantic_overflow = self.config.get("allow_semantic_overflow", True)
         self.boundary_similarity_threshold = self.config.get("boundary_similarity_threshold", 0.5)
+        self.strong_boundary_multiplier = self.config.get("strong_boundary_multiplier", 0.6)
+        self.semantic_check_multiplier = self.config.get("semantic_check_multiplier", 1.5)
         self.prefer_time_boundaries = self.config.get("prefer_time_boundaries", False)
+        self.prefer_semantic_boundaries = self.config.get("prefer_semantic_boundaries", True)
         
         # Convert to seconds for internal use
         self.target_duration = self.target_duration_minutes * 60.0
@@ -56,7 +65,9 @@ class SectionGenerator(BeatAggregator):
         logger.debug(
             f"SectionGenerator initialized: target={self.target_duration_minutes}min, "
             f"range={self.min_duration_minutes}-{self.max_duration_minutes}min, "
-            f"allow_overflow={self.allow_semantic_overflow}"
+            f"allow_overflow={self.allow_semantic_overflow}, "
+            f"semantic_boundaries={self.prefer_semantic_boundaries}, "
+            f"similarity_threshold={self.boundary_similarity_threshold}"
         )
     
     def get_artifact_type(self) -> str:
@@ -114,6 +125,8 @@ class SectionGenerator(BeatAggregator):
         """
         Generate sections for a single episode.
         
+        Loads beat embeddings if available to enable semantic boundary detection.
+        
         Args:
             episode_id: Episode identifier
             beats: Sorted list of beats from one episode
@@ -123,6 +136,9 @@ class SectionGenerator(BeatAggregator):
         """
         if not beats:
             return []
+        
+        # Try to load beat embeddings for semantic boundary detection
+        beats = self._load_beat_embeddings(beats)
         
         sections = []
         current_section_beats = []
@@ -224,6 +240,18 @@ class SectionGenerator(BeatAggregator):
                 logger.debug(f"Breaking section at {current_duration/60:.1f}min (max duration)")
                 return True
         
+        # Check for strong semantic boundary even before target duration (if embeddings available)
+        # This allows semantic-driven sections rather than purely time-driven
+        if current_duration >= self.min_duration * self.semantic_check_multiplier:
+            if self._has_semantic_boundary(current_beats[-1], next_beat):
+                # Check if this is a strong semantic boundary (low similarity)
+                if self._is_strong_semantic_boundary(current_beats[-1], next_beat):
+                    logger.debug(
+                        f"Breaking section at {current_duration/60:.1f}min "
+                        f"(strong semantic boundary detected)"
+                    )
+                    return True
+        
         # Check if we're near target and there's a semantic boundary
         if current_duration >= self.target_duration * 0.8:  # Within 80% of target
             if self._has_semantic_boundary(current_beats[-1], next_beat):
@@ -283,6 +311,50 @@ class SectionGenerator(BeatAggregator):
         
         return False
     
+    def _is_strong_semantic_boundary(
+        self,
+        beat1: Dict[str, Any],
+        beat2: Dict[str, Any],
+    ) -> bool:
+        """
+        Check if there's a STRONG semantic boundary (major topic shift).
+        
+        A strong boundary has significantly lower similarity than the normal threshold,
+        indicating a major topic change that should trigger a section break even
+        before reaching target duration.
+        
+        Args:
+            beat1: First beat
+            beat2: Second beat
+        
+        Returns:
+            True if strong semantic boundary exists, False otherwise
+        """
+        # Only works with embeddings
+        if "embedding" not in beat1 or "embedding" not in beat2:
+            return False
+        
+        try:
+            emb1 = np.array(beat1["embedding"])
+            emb2 = np.array(beat2["embedding"])
+            
+            similarity = self._cosine_similarity(emb1, emb2)
+            
+            # Strong boundary threshold is lower than regular boundary
+            # Configured via strong_boundary_multiplier (default 0.6)
+            strong_threshold = self.boundary_similarity_threshold * self.strong_boundary_multiplier
+            
+            if similarity < strong_threshold:
+                logger.debug(
+                    f"Strong semantic boundary detected (similarity: {similarity:.3f} < {strong_threshold:.3f})"
+                )
+                return True
+            
+            return False
+        except Exception as e:
+            logger.debug(f"Error computing strong boundary: {e}")
+            return False
+    
     def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
         """
         Compute cosine similarity between two vectors.
@@ -303,6 +375,83 @@ class SectionGenerator(BeatAggregator):
         
         # Clip to [0, 1] range
         return max(0.0, min(1.0, float(similarity)))
+    
+    def _load_beat_embeddings(self, beats: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Load beat embeddings from parquet file if not already present.
+        
+        Attaches embeddings to beat dictionaries for semantic boundary detection.
+        Gracefully handles missing embeddings - logs warning but continues.
+        
+        Args:
+            beats: List of beat dictionaries
+        
+        Returns:
+            List of beat dictionaries (same objects, potentially with embeddings added)
+        """
+        # Check if any beats already have embeddings
+        if beats and "embedding" in beats[0]:
+            logger.debug("Beats already have embeddings loaded")
+            return beats
+        
+        # Try to load embeddings from lakehouse structure
+        try:
+            # Try to find lakehouse root and load embeddings
+            lakehouse_path = Path("lakehouse")
+            if not lakehouse_path.exists():
+                # Try current directory
+                lakehouse_path = Path(".")
+            
+            structure = LakehouseStructure(lakehouse_path)
+            embeddings_path = structure.get_embeddings_path("v1")
+            embeddings_file = embeddings_path / "beat_embeddings.parquet"
+            
+            if not embeddings_file.exists():
+                logger.warning(
+                    f"Beat embeddings file not found at {embeddings_file}. "
+                    "Sections will use time-based boundaries only."
+                )
+                return beats
+            
+            logger.debug(f"Loading beat embeddings from {embeddings_file}")
+            embeddings_df = pd.read_parquet(embeddings_file)
+            
+            # Check if required columns exist
+            if "artifact_id" not in embeddings_df.columns or "embedding" not in embeddings_df.columns:
+                logger.warning(
+                    f"Beat embeddings file missing required columns. "
+                    "Expected 'artifact_id' and 'embedding'."
+                )
+                return beats
+            
+            # Create lookup dictionary for embeddings
+            embeddings_lookup = {}
+            for _, row in embeddings_df.iterrows():
+                artifact_id = row["artifact_id"]
+                embedding = row["embedding"]
+                if isinstance(embedding, (list, np.ndarray)):
+                    embeddings_lookup[artifact_id] = np.array(embedding)
+            
+            # Attach embeddings to beats
+            loaded_count = 0
+            for beat in beats:
+                beat_id = beat.get("beat_id")
+                if beat_id and beat_id in embeddings_lookup:
+                    beat["embedding"] = embeddings_lookup[beat_id]
+                    loaded_count += 1
+            
+            logger.info(
+                f"Loaded embeddings for {loaded_count}/{len(beats)} beats "
+                f"({100 * loaded_count / len(beats):.1f}%)"
+            )
+            
+        except Exception as e:
+            logger.warning(
+                f"Failed to load beat embeddings: {e}. "
+                "Sections will use time-based boundaries only."
+            )
+        
+        return beats
     
     def _create_section(
         self,
@@ -343,6 +492,12 @@ class SectionGenerator(BeatAggregator):
             text=text,
         )
         
+        # Generate section title (simple numbered approach)
+        title = self._generate_section_title(position, text)
+        
+        # Generate section synopsis (placeholder for now)
+        synopsis = self._generate_section_synopsis(text)
+        
         # Build section record
         section = {
             "section_id": section_id,
@@ -352,9 +507,44 @@ class SectionGenerator(BeatAggregator):
             "duration_minutes": duration_minutes,
             "text": text,
             "beat_ids": beat_ids,
+            "title": title,
+            "synopsis": synopsis,
         }
         
         return section
+    
+    def _generate_section_title(self, position: int, text: str) -> str:
+        """
+        Generate a title for the section.
+        
+        Uses simple numbered approach by default ("Section 1", "Section 2", etc.).
+        Future enhancement could extract key phrases from text.
+        
+        Args:
+            position: Section position within episode (0-based)
+            text: Combined text from all beats in section
+        
+        Returns:
+            Section title string
+        """
+        # Simple numbered approach (1-based for human readability)
+        return f"Section {position + 1}"
+    
+    def _generate_section_synopsis(self, text: str) -> Optional[str]:
+        """
+        Generate a synopsis for the section.
+        
+        Currently returns a placeholder value. Future enhancement could use
+        text summarization or extract first sentence.
+        
+        Args:
+            text: Combined text from all beats in section
+        
+        Returns:
+            Synopsis string or None
+        """
+        # Placeholder implementation as per PRD
+        return "Auto-generated"
     
     def compute_statistics(self, sections: List[Dict[str, Any]]) -> Dict[str, Any]:
         """

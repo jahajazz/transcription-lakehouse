@@ -719,3 +719,151 @@ class TestAggregationPipeline:
         assert len(ep1_spans) > 0
         assert len(ep2_spans) > 0
 
+
+# ============================================================================
+# Semantic Section Generation Tests (R2)
+# ============================================================================
+
+class TestSemanticSectionGeneration:
+    """Tests for semantic section generation improvements (PRD R2)."""
+    
+    def test_multiple_sections_per_episode(self):
+        """Test that episodes generate multiple sections (Task 2.8)."""
+        # Create a longer episode with 60 minutes of content (10 beats * 6 min each)
+        # Use strict time-based config to force multiple sections
+        beats = []
+        for i in range(10):
+            beat = {
+                "beat_id": f"bet_{i:03d}",
+                "episode_id": "LONG_EP",
+                "start_time": i * 360.0,  # 6 minutes per beat
+                "end_time": (i + 1) * 360.0,
+                "duration": 360.0,
+                "text": f"Beat {i} content discussing various topics.",
+                "span_ids": [f"spn_{i}"],
+            }
+            beats.append(beat)
+        
+        generator = SectionGenerator({
+            "min_duration_minutes": 5.0,
+            "target_duration_minutes": 8.0,
+            "max_duration_minutes": 10.0,  # Stricter max
+            "allow_semantic_overflow": False,  # Force hard limit
+            "prefer_time_boundaries": True,  # Prefer time over semantics
+        })
+        sections = generator.aggregate(beats)
+        
+        # For 60 minutes of content with max 10 minutes, should generate at least 6 sections
+        assert len(sections) >= 6, f"Expected at least 6 sections for 60 min content, got {len(sections)}"
+        
+        # Verify that no single section exceeds max duration
+        for section in sections:
+            assert section["duration_minutes"] <= 10.0, \
+                f"Section exceeds max duration: {section['duration_minutes']:.1f} minutes"
+    
+    def test_all_beats_assigned_to_exactly_one_section(self):
+        """Test that every beat belongs to exactly one section (Task 2.9)."""
+        # Create test beats
+        beats = []
+        for i in range(15):
+            beat = {
+                "beat_id": f"beat_{i:03d}",
+                "episode_id": "TEST_EP",
+                "start_time": i * 120.0,  # 2 minutes each
+                "end_time": (i + 1) * 120.0,
+                "duration": 120.0,
+                "text": f"Content for beat {i}",
+                "span_ids": [f"span_{i}"],
+            }
+            beats.append(beat)
+        
+        generator = SectionGenerator()
+        sections = generator.aggregate(beats)
+        
+        # Collect all beat IDs from all sections
+        beat_ids_in_sections = []
+        for section in sections:
+            beat_ids_in_sections.extend(section["beat_ids"])
+        
+        # Check that each beat appears exactly once
+        original_beat_ids = [b["beat_id"] for b in beats]
+        assert len(beat_ids_in_sections) == len(original_beat_ids), \
+            "Number of beats in sections doesn't match original beats"
+        
+        # Check for duplicates (no beat should appear in multiple sections)
+        assert len(beat_ids_in_sections) == len(set(beat_ids_in_sections)), \
+            "Some beats appear in multiple sections (overlaps detected)"
+        
+        # Check that all beats are covered (no gaps)
+        assert set(beat_ids_in_sections) == set(original_beat_ids), \
+            "Some beats are missing from sections (gaps detected)"
+    
+    def test_sections_chronologically_ordered(self):
+        """Test that sections within an episode are chronologically ordered (Task 2.10)."""
+        # Create test beats with timestamps
+        beats = []
+        for i in range(12):
+            beat = {
+                "beat_id": f"beat_{i:03d}",
+                "episode_id": "ORDERED_EP",
+                "start_time": i * 180.0,  # 3 minutes each
+                "end_time": (i + 1) * 180.0,
+                "duration": 180.0,
+                "text": f"Sequential content {i}",
+                "span_ids": [f"span_{i}"],
+            }
+            beats.append(beat)
+        
+        generator = SectionGenerator()
+        sections = generator.aggregate(beats)
+        
+        # Verify sections are in chronological order
+        for i in range(len(sections) - 1):
+            current_section = sections[i]
+            next_section = sections[i + 1]
+            
+            # Next section should start at or after current section ends
+            assert next_section["start_time"] >= current_section["end_time"], \
+                f"Section {i+1} starts before section {i} ends (not chronological)"
+            
+            # Verify beat_ids are in ascending order (assuming beat IDs encode order)
+            current_last_beat_id = current_section["beat_ids"][-1]
+            next_first_beat_id = next_section["beat_ids"][0]
+            
+            # Beat IDs should be sequential
+            current_idx = int(current_last_beat_id.split("_")[-1])
+            next_idx = int(next_first_beat_id.split("_")[-1])
+            assert next_idx > current_idx, \
+                f"Beat order incorrect between sections {i} and {i+1}"
+    
+    def test_section_has_title_and_synopsis(self):
+        """Test that generated sections include title and synopsis fields."""
+        beats = [
+            {
+                "beat_id": "beat_001",
+                "episode_id": "TEST",
+                "start_time": 0.0,
+                "end_time": 300.0,
+                "duration": 300.0,
+                "text": "Test content",
+                "span_ids": ["span_001"],
+            }
+        ]
+        
+        generator = SectionGenerator()
+        sections = generator.aggregate(beats)
+        
+        assert len(sections) > 0
+        section = sections[0]
+        
+        # Check title field exists and is populated
+        assert "title" in section
+        assert isinstance(section["title"], str)
+        assert len(section["title"]) > 0
+        assert "Section" in section["title"]  # Should be "Section N" format
+        
+        # Check synopsis field exists
+        assert "synopsis" in section
+        # Synopsis can be None or a string
+        if section["synopsis"] is not None:
+            assert isinstance(section["synopsis"], str)

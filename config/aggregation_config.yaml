@@ -35,7 +35,7 @@ beats:
   # Fallback method if embeddings not available
   fallback_method: "heuristic"  # Options: "heuristic", "time_based"
 
-# Section Generation (5-12 minute logical blocks)
+# Section Generation (semantic topic-based blocks)
 sections:
   # Target section duration in minutes
   target_duration_minutes: 8.0
@@ -50,12 +50,33 @@ sections:
   # Whether to allow sections to exceed max_duration for semantic coherence
   allow_semantic_overflow: true
   
-  # Similarity threshold for section boundaries
-  # Lower than beat threshold to create larger groupings
+  # Similarity threshold for section boundaries (0.0 - 1.0)
+  # Cosine similarity below this value indicates a semantic boundary/topic change
+  # Lower values = stricter boundaries (more sections)
+  # Higher values = looser boundaries (fewer sections)
+  # Default 0.5 means sections break when similarity drops below 50%
   boundary_similarity_threshold: 0.5
   
+  # Strong boundary threshold multiplier (0.0 - 1.0)
+  # Multiplied by boundary_similarity_threshold to detect major topic shifts
+  # Allows breaking sections before target duration when strong boundary detected
+  # Default 0.6 means strong boundaries at 60% of regular threshold (0.3 if regular is 0.5)
+  strong_boundary_multiplier: 0.6
+  
+  # Minimum duration multiplier before checking for semantic boundaries
+  # Sections must be at least (min_duration * this value) before semantic breaks are considered
+  # Default 1.5 means sections can break semantically after 7.5 minutes (if min is 5)
+  semantic_check_multiplier: 1.5
+  
   # Whether to prefer time-based boundaries over semantic ones
+  # If true, sections will break at target duration regardless of topic coherence
+  # If false (default), prioritizes semantic coherence and may vary section durations
   prefer_time_boundaries: false
+  
+  # Whether to use beat embeddings for semantic boundary detection
+  # If true and embeddings available, uses cosine similarity for topic change detection
+  # If false or embeddings unavailable, falls back to time-based boundaries
+  prefer_semantic_boundaries: true
 
 # General settings
 general:

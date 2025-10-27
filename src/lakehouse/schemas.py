@@ -52,6 +52,8 @@ SECTION_SCHEMA = pa.schema([
     pa.field("duration_minutes", pa.float64(), nullable=False),
     pa.field("text", pa.string(), nullable=False),
     pa.field("beat_ids", pa.list_(pa.string()), nullable=False),
+    pa.field("title", pa.string(), nullable=False),
+    pa.field("synopsis", pa.string(), nullable=True),
 ])
 
 # Embeddings Schema (vector representations)
