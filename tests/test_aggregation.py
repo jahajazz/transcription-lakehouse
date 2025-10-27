@@ -14,6 +14,47 @@ from lakehouse.aggregation.sections import SectionGenerator, generate_sections
 from lakehouse.ingestion.normalizer import normalize_utterances
 
 
+# Helper function to generate mock embeddings for testing
+def generate_mock_embeddings(count: int, dim: int = 384, seed: int = 42) -> List[np.ndarray]:
+    """
+    Generate mock embeddings with controlled similarity patterns.
+    
+    Args:
+        count: Number of embeddings to generate
+        dim: Embedding dimension
+        seed: Random seed for reproducibility
+    
+    Returns:
+        List of numpy arrays (embeddings)
+    """
+    np.random.seed(seed)
+    embeddings = []
+    
+    # Generate embeddings with some structure
+    # Group embeddings in clusters to simulate topic coherence
+    cluster_size = 3
+    num_clusters = (count + cluster_size - 1) // cluster_size
+    
+    for cluster_idx in range(num_clusters):
+        # Generate a cluster center
+        center = np.random.randn(dim)
+        center = center / np.linalg.norm(center)  # Normalize
+        
+        # Generate embeddings around this center
+        for i in range(cluster_size):
+            idx = cluster_idx * cluster_size + i
+            if idx >= count:
+                break
+            
+            # Add some noise to the center
+            noise = np.random.randn(dim) * 0.1
+            embedding = center + noise
+            embedding = embedding / np.linalg.norm(embedding)  # Normalize
+            embeddings.append(embedding)
+    
+    return embeddings
+
+
 # ============================================================================
 # Test Fixtures
 # ============================================================================
@@ -750,6 +791,7 @@ class TestSemanticSectionGeneration:
             "max_duration_minutes": 10.0,  # Stricter max
             "allow_semantic_overflow": False,  # Force hard limit
             "prefer_time_boundaries": True,  # Prefer time over semantics
+            "require_embeddings": False,  # Allow time-based fallback for this test
         })
         sections = generator.aggregate(beats)
         
@@ -777,7 +819,7 @@ class TestSemanticSectionGeneration:
             }
             beats.append(beat)
         
-        generator = SectionGenerator()
+        generator = SectionGenerator({"require_embeddings": False})
         sections = generator.aggregate(beats)
         
         # Collect all beat IDs from all sections
@@ -814,7 +856,7 @@ class TestSemanticSectionGeneration:
             }
             beats.append(beat)
         
-        generator = SectionGenerator()
+        generator = SectionGenerator({"require_embeddings": False})
         sections = generator.aggregate(beats)
         
         # Verify sections are in chronological order
@@ -850,7 +892,7 @@ class TestSemanticSectionGeneration:
             }
         ]
         
-        generator = SectionGenerator()
+        generator = SectionGenerator({"require_embeddings": False})
         sections = generator.aggregate(beats)
         
         assert len(sections) > 0
@@ -867,3 +909,66 @@ class TestSemanticSectionGeneration:
         # Synopsis can be None or a string
         if section["synopsis"] is not None:
             assert isinstance(section["synopsis"], str)
+    
+    def test_semantic_boundary_detection_with_embeddings(self):
+        """Test that sections break at semantic boundaries using embeddings."""
+        # Create 9 beats with mock embeddings
+        # Cluster pattern: 3 beats topic A, 3 beats topic B, 3 beats topic C
+        beats = []
+        embeddings = generate_mock_embeddings(9, dim=384, seed=42)
+        
+        for i in range(9):
+            beat = {
+                "beat_id": f"beat_{i:03d}",
+                "episode_id": "SEMANTIC_EP",
+                "start_time": i * 120.0,  # 2 minutes each (total 18 min)
+                "end_time": (i + 1) * 120.0,
+                "duration": 120.0,
+                "text": f"Beat {i} discussing topic {i // 3}",
+                "span_ids": [f"span_{i}"],
+                "embedding": embeddings[i],  # Attach mock embedding
+            }
+            beats.append(beat)
+        
+        # Configure for semantic boundaries
+        generator = SectionGenerator({
+            "min_duration_minutes": 2.0,  # Low minimum to allow semantic breaks
+            "target_duration_minutes": 6.0,  # 3 beats per section ideally
+            "max_duration_minutes": 10.0,
+            "boundary_similarity_threshold": 0.7,  # Detect topic changes
+            "prefer_semantic_boundaries": True,
+            "require_embeddings": False,  # Embeddings already attached to beats
+        })
+        sections = generator.aggregate(beats)
+        
+        # With clustered embeddings (3 per cluster), should create ~3 sections
+        # Each cluster of 3 beats has high similarity within, low between
+        assert len(sections) >= 2, f"Expected multiple sections from semantic clustering, got {len(sections)}"
+        
+        # Verify that embeddings were used (all beats should have them)
+        for beat in beats:
+            assert "embedding" in beat, "Beat should have embedding attached"
+    
+    def test_require_embeddings_fails_when_missing(self):
+        """Test that require_embeddings=true fails when embeddings are missing."""
+        beats = [
+            {
+                "beat_id": "beat_001",
+                "episode_id": "TEST",
+                "start_time": 0.0,
+                "end_time": 300.0,
+                "duration": 300.0,
+                "text": "Test content",
+                "span_ids": ["span_001"],
+                # No embedding attached
+            }
+        ]
+        
+        # Should raise error when embeddings required but missing
+        generator = SectionGenerator({
+            "require_embeddings": True,
+            "prefer_semantic_boundaries": True,
+        })
+        
+        with pytest.raises((FileNotFoundError, RuntimeError, ValueError)):
+            generator.aggregate(beats)

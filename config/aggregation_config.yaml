@@ -77,6 +77,11 @@ sections:
   # If true and embeddings available, uses cosine similarity for topic change detection
   # If false or embeddings unavailable, falls back to time-based boundaries
   prefer_semantic_boundaries: true
+  
+  # Whether to require embeddings for section generation
+  # If true and embeddings are missing, raises an error instead of falling back
+  # Set to false only if you want time-based fallback behavior
+  require_embeddings: true
 
 # General settings
 general:

@@ -56,6 +56,7 @@ class SectionGenerator(BeatAggregator):
         self.semantic_check_multiplier = self.config.get("semantic_check_multiplier", 1.5)
         self.prefer_time_boundaries = self.config.get("prefer_time_boundaries", False)
         self.prefer_semantic_boundaries = self.config.get("prefer_semantic_boundaries", True)
+        self.require_embeddings = self.config.get("require_embeddings", True)
         
         # Convert to seconds for internal use
         self.target_duration = self.target_duration_minutes * 60.0
@@ -407,6 +408,11 @@ class SectionGenerator(BeatAggregator):
             embeddings_file = embeddings_path / "beat_embeddings.parquet"
             
             if not embeddings_file.exists():
+                if self.require_embeddings and self.prefer_semantic_boundaries:
+                    raise FileNotFoundError(
+                        f"Beat embeddings required for semantic section generation but not found at {embeddings_file}. "
+                        f"Generate embeddings first using 'lakehouse embed' or set require_embeddings=false in config."
+                    )
                 logger.warning(
                     f"Beat embeddings file not found at {embeddings_file}. "
                     "Sections will use time-based boundaries only."
@@ -440,12 +446,32 @@ class SectionGenerator(BeatAggregator):
                     beat["embedding"] = embeddings_lookup[beat_id]
                     loaded_count += 1
             
+            coverage_pct = 100 * loaded_count / len(beats) if beats else 0
             logger.info(
-                f"Loaded embeddings for {loaded_count}/{len(beats)} beats "
-                f"({100 * loaded_count / len(beats):.1f}%)"
+                f"Loaded embeddings for {loaded_count}/{len(beats)} beats ({coverage_pct:.1f}%)"
             )
             
+            # Check if coverage is adequate when embeddings are required
+            if self.require_embeddings and self.prefer_semantic_boundaries:
+                min_coverage = 80.0  # Require at least 80% coverage
+                if coverage_pct < min_coverage:
+                    raise ValueError(
+                        f"Insufficient embedding coverage for semantic sections: {coverage_pct:.1f}% < {min_coverage}%. "
+                        f"Only {loaded_count}/{len(beats)} beats have embeddings. "
+                        f"Generate embeddings for all beats or set require_embeddings=false."
+                    )
+            
+        except FileNotFoundError:
+            # Already handled above with clear error message
+            raise
+        except ValueError:
+            # Coverage error - re-raise with clear message
+            raise
         except Exception as e:
+            if self.require_embeddings and self.prefer_semantic_boundaries:
+                raise RuntimeError(
+                    f"Failed to load beat embeddings (required for semantic sections): {e}"
+                ) from e
             logger.warning(
                 f"Failed to load beat embeddings: {e}. "
                 "Sections will use time-based boundaries only."
