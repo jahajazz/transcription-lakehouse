@@ -90,18 +90,18 @@ Based on PRD: `0003-prd-provisional-lake-snapshot.md`
   - [x] 5.10 Update `src/lakehouse/cli/__init__.py` to import snapshot command in the main() function so it's registered with the CLI
   - [x] 5.11 Add error handling and user-friendly error messages for common failures (missing artifacts, disk full, permission denied, git not available)
 
-- [ ] 6.0 **Testing & Documentation**
-  - [ ] 6.1 Create `tests/test_snapshot_config.py` with tests for version parsing, formatting, collision detection, and next version calculation
-  - [ ] 6.2 Create `tests/test_snapshot_artifacts.py` with tests for artifact discovery, SHA-256 calculation, Parquet row counting, and file copying
-  - [ ] 6.3 Create `tests/test_snapshot_manifest.py` with tests for git commit hash retrieval, QA report parsing, manifest structure generation, and JSON writing
-  - [ ] 6.4 Create `tests/test_snapshot_validator.py` with tests for existence checks, manifest validation, inventory verification, and validation report generation
-  - [ ] 6.5 Create `tests/test_snapshot_creator.py` with tests for the full orchestration logic using mock artifacts
-  - [ ] 6.6 Create `tests/integration/test_snapshot_workflow.py` with end-to-end integration test that creates a snapshot from real lakehouse fixtures, validates it, and verifies reproducibility
-  - [ ] 6.7 Add test for immutability: create snapshot twice from same inputs, verify identical SHA-256 checksums (FR-27)
-  - [ ] 6.8 Add test for version collision handling: create snapshot, create again, verify patch version incremented (FR-3)
-  - [ ] 6.9 Add test for missing artifacts: attempt snapshot creation with incomplete lakehouse, verify it fails immediately (FR-10)
-  - [ ] 6.10 Add test for QA status detection: test with PASS report, FAIL report, and no report (UNKNOWN state)
-  - [ ] 6.11 Add test fixtures in `tests/fixtures/` for mock lakehouse structure and sample QA reports
-  - [ ] 6.12 Run all tests with `pytest tests/test_snapshot_*.py` and ensure >90% code coverage for snapshot module
-  - [ ] 6.13 Manually test CLI command: `lakehouse snapshot create` and verify output matches acceptance criteria in PRD
+- [x] 6.0 **Testing & Documentation**
+  - [x] 6.1 Create `tests/test_snapshot_config.py` with tests for version parsing, formatting, collision detection, and next version calculation
+  - [x] 6.2 Create `tests/test_snapshot_artifacts.py` with tests for artifact discovery, SHA-256 calculation, Parquet row counting, and file copying
+  - [x] 6.3 Create `tests/test_snapshot_manifest.py` with tests for git commit hash retrieval, QA report parsing, manifest structure generation, and JSON writing
+  - [x] 6.4 Create `tests/test_snapshot_validator.py` with tests for existence checks, manifest validation, inventory verification, and validation report generation
+  - [x] 6.5 Create `tests/test_snapshot_creator.py` with tests for the full orchestration logic using mock artifacts
+  - [x] 6.6 Create `tests/integration/test_snapshot_workflow.py` with end-to-end integration test that creates a snapshot from real lakehouse fixtures, validates it, and verifies reproducibility
+  - [x] 6.7 Add test for immutability: create snapshot twice from same inputs, verify identical SHA-256 checksums (FR-27)
+  - [x] 6.8 Add test for version collision handling: create snapshot, create again, verify patch version incremented (FR-3)
+  - [x] 6.9 Add test for missing artifacts: attempt snapshot creation with incomplete lakehouse, verify it fails immediately (FR-10)
+  - [x] 6.10 Add test for QA status detection: test with PASS report, FAIL report, and no report (UNKNOWN state)
+  - [x] 6.11 Add test fixtures in `tests/fixtures/` for mock lakehouse structure and sample QA reports
+  - [x] 6.12 Run all tests with `pytest tests/test_snapshot_*.py` and ensure >90% code coverage for snapshot module
+  - [x] 6.13 Manually test CLI command: `lakehouse snapshot create` and verify output matches acceptance criteria in PRD
 

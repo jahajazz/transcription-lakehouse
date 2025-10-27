@@ -5,6 +5,7 @@ Provides CLI interface for creating versioned, immutable snapshots of
 lakehouse artifacts with manifest and validation.
 """
 
+import sys
 import click
 from pathlib import Path
 from rich.console import Console
@@ -126,30 +127,31 @@ def create(
         validation_status = result['validation_result']['status']
         if validation_status == 'FAIL':
             console.print("\n[bold red]❌ Snapshot validation FAILED[/bold red]")
-            raise click.Exit(1)
+            sys.exit(1)
         else:
             # Check for warnings
-            warnings = result['validation_result'].get('warnings', [])
+            warnings = result['validation_result']['warnings']
             if warnings:
                 console.print("\n[bold yellow]✓ Snapshot created with WARNINGS[/bold yellow]")
             else:
                 console.print("\n[bold green]✓ Snapshot created successfully[/bold green]")
-            raise click.Exit(0)
+            # Normal exit - just return
+            return
     
     except FileNotFoundError as e:
         console.print(f"\n[bold red]Error:[/bold red] {e}")
         logger.error(f"File not found: {e}")
-        raise click.Exit(1)
+        sys.exit(1)
     
     except IOError as e:
         console.print(f"\n[bold red]Error:[/bold red] {e}")
         logger.error(f"IO error: {e}")
-        raise click.Exit(1)
+        sys.exit(1)
     
     except Exception as e:
         console.print(f"\n[bold red]Error during snapshot creation:[/bold red] {e}")
         logger.exception("Snapshot creation failed")
-        raise click.Exit(1)
+        sys.exit(1)
 
 
 def _display_configuration(
