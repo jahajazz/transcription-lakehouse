@@ -1,0 +1,26 @@
+# Speaker Roles Configuration
+# Defines speaker roles and expert classifications for the Transcription Lakehouse
+#
+# This file controls how speakers are classified and enriched in spans and beats.
+# Edit this file to add or modify expert speakers and role assignments.
+
+# List of canonical speaker names who are considered experts
+# These speakers will have is_expert=true in spans and contribute to expert_coverage_pct in beats
+experts:
+  - "Fr Stephen De Young"
+  - "Jonathan Pageau"
+
+# Optional: Map canonical speaker names to specific roles
+# If a speaker is in the experts list but not in this map, they default to "expert"
+# If a speaker is not in the experts list and not in this map, they get default_role
+roles:
+  "Fr Stephen De Young": "expert"
+  "Jonathan Pageau": "expert"
+  # Add other speaker role mappings as needed, e.g.:
+  # "Host Name": "host"
+  # "Guest Name": "guest"
+
+# Default role for speakers not explicitly listed in the roles map or experts list
+# Valid values: "expert", "host", "guest", "caller", "other"
+default_role: "other"
+

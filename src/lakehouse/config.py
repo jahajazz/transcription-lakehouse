@@ -258,6 +258,31 @@ def load_config(
     return config
 
 
+def load_speaker_roles(config_path: Optional[Path] = None):
+    """
+    Load speaker roles configuration.
+    
+    Args:
+        config_path: Path to speaker_roles.yaml (default: config/speaker_roles.yaml)
+    
+    Returns:
+        SpeakerRoleConfig instance
+    
+    Raises:
+        FileNotFoundError: If config file not found
+        ValueError: If config is invalid
+    
+    Example:
+        >>> from lakehouse.config import load_speaker_roles
+        >>> config = load_speaker_roles()
+        >>> config.is_expert("Fr Stephen De Young")
+        True
+    """
+    from lakehouse.speaker_roles import SpeakerRoleConfig
+    
+    return SpeakerRoleConfig(config_path)
+
+
 class Config:
     """
     Configuration manager for lakehouse.
