@@ -45,16 +45,16 @@ Based on PRD: `0003-prd-provisional-lake-snapshot.md`
   - [x] 1.7 Implement `resolve_snapshot_root(config: SnapshotConfig) -> Path` to resolve SNAPSHOT_ROOT from config or environment variable, with default fallback to `./snapshots/`
   - [x] 1.8 Add validation to ensure snapshot_root is writable and create directory if it doesn't exist
 
-- [ ] 2.0 **Artifact Discovery & File Collection**
-  - [ ] 2.1 Create `src/lakehouse/snapshot/artifacts.py` with `ArtifactDiscovery` class
-  - [ ] 2.2 Implement `discover_artifacts(lakehouse_path: Path, version: str = "v1") -> Dict[str, List[Path]]` that returns categorized artifact paths (spans, beats, sections, embeddings, indexes, catalogs)
-  - [ ] 2.3 Implement `find_latest_qa_report(base_path: Path) -> Optional[Path]` that scans `quality_reports/` for the most recent timestamped directory and returns path to quality_assessment.md
-  - [ ] 2.4 Implement `calculate_sha256(file_path: Path) -> str` to compute SHA-256 checksum of a file
-  - [ ] 2.5 Implement `get_parquet_row_count(file_path: Path) -> Optional[int]` using pyarrow to read row count from Parquet files
-  - [ ] 2.6 Implement `copy_artifact_with_metadata(src: Path, dest: Path) -> Dict[str, Any]` that copies file and returns metadata dict with path, bytes, sha256, rows (if Parquet)
-  - [ ] 2.7 Implement `create_snapshot_structure(snapshot_root: Path, version: str) -> Dict[str, Path]` that creates the snapshot directory and subdirectories (spans/, beats/, sections/, embeddings/, indexes/, catalogs/, quality_report/)
-  - [ ] 2.8 Implement `copy_all_artifacts(artifacts: Dict[str, List[Path]], dest_dirs: Dict[str, Path], qa_report_path: Optional[Path]) -> List[Dict[str, Any]]` that copies all discovered artifacts to snapshot, calculates checksums, and returns list of file metadata dicts
-  - [ ] 2.9 Add error handling for missing artifacts (fail immediately if any required artifact is missing or unreadable per FR-10)
+- [x] 2.0 **Artifact Discovery & File Collection**
+  - [x] 2.1 Create `src/lakehouse/snapshot/artifacts.py` with `ArtifactDiscovery` class
+  - [x] 2.2 Implement `discover_artifacts(lakehouse_path: Path, version: str = "v1") -> Dict[str, List[Path]]` that returns categorized artifact paths (spans, beats, sections, embeddings, indexes, catalogs)
+  - [x] 2.3 Implement `find_latest_qa_report(base_path: Path) -> Optional[Path]` that scans `quality_reports/` for the most recent timestamped directory and returns path to quality_assessment.md
+  - [x] 2.4 Implement `calculate_sha256(file_path: Path) -> str` to compute SHA-256 checksum of a file
+  - [x] 2.5 Implement `get_parquet_row_count(file_path: Path) -> Optional[int]` using pyarrow to read row count from Parquet files
+  - [x] 2.6 Implement `copy_artifact_with_metadata(src: Path, dest: Path) -> Dict[str, Any]` that copies file and returns metadata dict with path, bytes, sha256, rows (if Parquet)
+  - [x] 2.7 Implement `create_snapshot_structure(snapshot_root: Path, version: str) -> Dict[str, Path]` that creates the snapshot directory and subdirectories (spans/, beats/, sections/, embeddings/, indexes/, catalogs/, quality_report/)
+  - [x] 2.8 Implement `copy_all_artifacts(artifacts: Dict[str, List[Path]], dest_dirs: Dict[str, Path], qa_report_path: Optional[Path]) -> List[Dict[str, Any]]` that copies all discovered artifacts to snapshot, calculates checksums, and returns list of file metadata dicts
+  - [x] 2.9 Add error handling for missing artifacts (fail immediately if any required artifact is missing or unreadable per FR-10)
 
 - [ ] 3.0 **Manifest Generation**
   - [ ] 3.1 Create `src/lakehouse/snapshot/manifest.py` with `ManifestGenerator` class
