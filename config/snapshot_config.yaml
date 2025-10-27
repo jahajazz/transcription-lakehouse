@@ -1,0 +1,36 @@
+# Snapshot Configuration
+# Configuration for lakehouse snapshot creation
+
+version:
+  major: 0
+  minor: 1
+  patch: 0
+
+# Snapshot root directory - where snapshots will be saved
+# Supports environment variable expansion: ${VAR_NAME:-default}
+# Default: ${SNAPSHOT_ROOT:-./snapshots}
+snapshot_root: "${SNAPSHOT_ROOT:-./snapshots}"
+
+# Auto-increment patch version on collision
+auto_increment: true
+
+# Suffix to append to provisional snapshots
+provisional_suffix: "-provisional"
+
+# Examples of alternative configurations:
+#
+# Fixed path:
+# snapshot_root: "C:/Data/lake_snapshots"
+#
+# User home directory:
+# snapshot_root: "~/lake_snapshots"
+#
+# Network share:
+# snapshot_root: "//server/share/lake_snapshots"
+#
+# Custom version:
+# version:
+#   major: 1
+#   minor: 0
+#   patch: 0
+
