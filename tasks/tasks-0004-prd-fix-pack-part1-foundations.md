@@ -50,7 +50,7 @@
 
 ## Tasks
 
-- [ ] 1.0 Create Speaker Roles Configuration Infrastructure (R1)
+- [x] 1.0 Create Speaker Roles Configuration Infrastructure (R1)
   - [x] 1.1 Create `config/speaker_roles.yaml` with required structure (experts list, roles map, default_role)
   - [x] 1.2 Add "Fr Stephen De Young" and "Jonathan Pageau" as experts in the config file
   - [x] 1.3 Create `src/lakehouse/speaker_roles.py` module with `SpeakerRoleConfig` class to load and validate the YAML config
