@@ -77,18 +77,18 @@ Based on PRD: `0003-prd-provisional-lake-snapshot.md`
   - [x] 4.7 Implement `generate_validation_report(validation_result: Dict[str, Any]) -> str` that formats validation result as human-readable text report
   - [x] 4.8 Add summary statistics to validation report (total files checked, bytes verified, etc.)
 
-- [ ] 5.0 **CLI Command & Integration**
-  - [ ] 5.1 Create `src/lakehouse/snapshot/creator.py` with `SnapshotCreator` class that orchestrates the full snapshot creation workflow
-  - [ ] 5.2 Implement `create_snapshot(lakehouse_path: Path, config: SnapshotConfig, version: Optional[str] = None) -> Dict[str, Any]` that coordinates: config resolution, artifact discovery, directory creation, file copying, manifest generation, validation, and returns result dict with snapshot_path, version, validation_result
-  - [ ] 5.3 Implement `generate_snapshot_note(snapshot_info: Dict[str, Any], manifest: Dict[str, Any], snapshot_path: Path) -> str` that creates snapshot_note.txt content with version, timestamp, QA status, usage instructions, and LAKE_ROOT export command
-  - [ ] 5.4 Implement `write_snapshot_note(note_content: str, snapshot_path: Path) -> None` that writes snapshot_note.txt to snapshot root
-  - [ ] 5.5 Create `src/lakehouse/cli/commands/snapshot.py` with Click command group for snapshot operations
-  - [ ] 5.6 Implement `@cli.group()` for `snapshot` with subcommands (initially just `create`, but structure for future `validate`, `promote`)
-  - [ ] 5.7 Implement `@snapshot.command()` for `create` that accepts --lakehouse-path, --config-dir, --snapshot-root, --version (optional override), --log-level flags using common_options pattern
-  - [ ] 5.8 Wire up CLI command to call SnapshotCreator.create_snapshot() and display progress with Rich console (similar to quality command pattern)
-  - [ ] 5.9 Implement CLI output display: show discovered artifacts count, copy progress for each artifact type, manifest generation, validation results, and final snapshot path with LAKE_ROOT export command
-  - [ ] 5.10 Update `src/lakehouse/cli/__init__.py` to import snapshot command in the main() function so it's registered with the CLI
-  - [ ] 5.11 Add error handling and user-friendly error messages for common failures (missing artifacts, disk full, permission denied, git not available)
+- [x] 5.0 **CLI Command & Integration**
+  - [x] 5.1 Create `src/lakehouse/snapshot/creator.py` with `SnapshotCreator` class that orchestrates the full snapshot creation workflow
+  - [x] 5.2 Implement `create_snapshot(lakehouse_path: Path, config: SnapshotConfig, version: Optional[str] = None) -> Dict[str, Any]` that coordinates: config resolution, artifact discovery, directory creation, file copying, manifest generation, validation, and returns result dict with snapshot_path, version, validation_result
+  - [x] 5.3 Implement `generate_snapshot_note(snapshot_info: Dict[str, Any], manifest: Dict[str, Any], snapshot_path: Path) -> str` that creates snapshot_note.txt content with version, timestamp, QA status, usage instructions, and LAKE_ROOT export command
+  - [x] 5.4 Implement `write_snapshot_note(note_content: str, snapshot_path: Path) -> None` that writes snapshot_note.txt to snapshot root
+  - [x] 5.5 Create `src/lakehouse/cli/commands/snapshot.py` with Click command group for snapshot operations
+  - [x] 5.6 Implement `@cli.group()` for `snapshot` with subcommands (initially just `create`, but structure for future `validate`, `promote`)
+  - [x] 5.7 Implement `@snapshot.command()` for `create` that accepts --lakehouse-path, --config-dir, --snapshot-root, --version (optional override), --log-level flags using common_options pattern
+  - [x] 5.8 Wire up CLI command to call SnapshotCreator.create_snapshot() and display progress with Rich console (similar to quality command pattern)
+  - [x] 5.9 Implement CLI output display: show discovered artifacts count, copy progress for each artifact type, manifest generation, validation results, and final snapshot path with LAKE_ROOT export command
+  - [x] 5.10 Update `src/lakehouse/cli/__init__.py` to import snapshot command in the main() function so it's registered with the CLI
+  - [x] 5.11 Add error handling and user-friendly error messages for common failures (missing artifacts, disk full, permission denied, git not available)
 
 - [ ] 6.0 **Testing & Documentation**
   - [ ] 6.1 Create `tests/test_snapshot_config.py` with tests for version parsing, formatting, collision detection, and next version calculation
