@@ -4,7 +4,7 @@
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-178%20passed-success)]()
+[![Tests](https://img.shields.io/badge/tests-121%20snapshot%20tests%20passed-success)]()
 
 ## Overview
 
@@ -126,6 +126,53 @@ lakehouse catalog --episode-id "SW - #001 - 2018-05-18 - Resurrection of Logos"
 lakehouse catalog --rankings
 ```
 
+### 5. Run Quality Assessment
+
+```bash
+# Run comprehensive quality assessment
+lakehouse quality assess
+
+# Quality checks include:
+# - Data integrity validation
+# - Embedding quality metrics
+# - Duplicate detection
+# - Statistical analysis
+```
+
+### 6. Create Snapshots
+
+Create versioned, immutable snapshots for sharing or migration:
+
+```bash
+# Create a snapshot with default version
+lakehouse snapshot create
+
+# Create with specific version
+lakehouse snapshot create --version 0.9.0-provisional
+
+# Create with custom snapshot location
+lakehouse snapshot create --snapshot-root /data/snapshots
+```
+
+**Configure snapshot locations** in `config/snapshot_config.yaml`:
+
+```yaml
+# Where to create snapshots (producer)
+snapshot_root: "D:/lakehouse/snapshots"
+
+# Which snapshot to use (consumer)
+lake_root: "D:/lakehouse/snapshots/v0.9.0-provisional"
+```
+
+The snapshot includes:
+- ✅ All consumer-facing artifacts (spans, beats, sections, embeddings, indexes, catalogs)
+- ✅ Comprehensive manifest with checksums and metadata
+- ✅ QA status tracking (PASS/FAIL/UNKNOWN)
+- ✅ Automatic validation and integrity checks
+- ✅ Platform-specific usage instructions
+
+See `docs/snapshot-setup.md` for complete configuration guide.
+
 ## Architecture
 
 ### Data Layers
@@ -240,6 +287,62 @@ Options:
   --help                       Show this message and exit
 ```
 
+#### `lakehouse quality assess`
+Run comprehensive quality assessment on lakehouse data.
+
+```bash
+lakehouse quality assess [OPTIONS]
+
+Options:
+  --lakehouse-path PATH        Path to lakehouse directory [default: ./lakehouse]
+  --config-dir PATH            Path to config directory [default: ./config]
+  --log-level TEXT             Logging level [default: INFO]
+  --level TEXT                 Assessment level [spans|beats|all] [default: all]
+  --output-dir PATH            Directory to save report [default: ./quality_reports]
+  --no-timestamp               Don't add timestamp to report directory
+  --config TEXT                Path to custom thresholds config
+  --coverage-min FLOAT         Minimum coverage threshold
+  --duplicate-max FLOAT        Maximum duplicate rate threshold
+  --sample-size INT            Number of samples for embedding analysis
+  --neighbor-k INT             Number of neighbors for similarity checks
+  --help                       Show this message and exit
+```
+
+Quality assessment includes:
+- **Data Integrity**: ID uniqueness, referential integrity, temporal ordering
+- **Embedding Quality**: Dimensionality, null rates, neighbor similarity
+- **Statistical Analysis**: Length distributions, coverage metrics
+- **Duplicate Detection**: Exact and near-duplicate identification
+
+#### `lakehouse snapshot create`
+Create versioned, immutable snapshots of lakehouse artifacts.
+
+```bash
+lakehouse snapshot create [OPTIONS]
+
+Options:
+  --lakehouse-path PATH        Path to lakehouse directory [default: ./lakehouse]
+  --config-dir PATH            Path to config directory [default: ./config]
+  --log-level TEXT             Logging level [default: INFO]
+  --snapshot-root PATH         Snapshot root directory [default: ./snapshots or $SNAPSHOT_ROOT]
+  --version TEXT               Override snapshot version (default: auto-increment from config)
+  --lakehouse-version TEXT     Lakehouse artifact version to snapshot [default: v1]
+  --help                       Show this message and exit
+```
+
+Snapshots include:
+- All consumer-facing artifacts (spans, beats, sections, embeddings, indexes, catalogs)
+- Comprehensive `lake_manifest.json` with checksums and metadata
+- QA status tracking (PASS/FAIL/UNKNOWN)
+- Automatic validation and integrity checks
+- Platform-specific usage instructions in `snapshot_note.txt`
+
+Configure snapshot locations in `config/snapshot_config.yaml`:
+```yaml
+snapshot_root: "${SNAPSHOT_ROOT:-./snapshots}"  # Where to create
+lake_root: "${LAKE_ROOT}"                        # Where to read from
+```
+
 ## Configuration
 
 Configuration files in `config/`:
@@ -317,6 +420,61 @@ text:
   min_length: 1
   max_length: 10000
   allow_empty: false
+```
+
+### `quality_thresholds.yaml`
+
+```yaml
+# Quality assessment thresholds
+thresholds:
+  # Coverage thresholds
+  coverage:
+    min_percentage: 95.0  # Minimum artifact coverage
+  
+  # Duplicate detection
+  duplicates:
+    max_exact_rate: 0.01      # Max 1% exact duplicates
+    max_near_rate: 0.05       # Max 5% near duplicates
+    similarity_threshold: 0.95
+  
+  # Length validation
+  length:
+    span_min: 5    # Minimum span length (words)
+    span_max: 100  # Maximum span length (words)
+    beat_min: 10
+    beat_max: 500
+  
+  # Embedding quality
+  embeddings:
+    min_neighbor_similarity: 0.3  # Minimum avg similarity to neighbors
+    max_null_rate: 0.0            # Maximum null embedding rate
+```
+
+### `snapshot_config.yaml`
+
+```yaml
+# Snapshot version configuration
+version:
+  major: 0
+  minor: 1
+  patch: 0
+
+# Producer settings - where to create snapshots
+snapshot_root: "${SNAPSHOT_ROOT:-./snapshots}"
+auto_increment: true
+provisional_suffix: "-provisional"
+
+# Consumer settings - where to read snapshots from
+lake_root: "${LAKE_ROOT}"
+
+# Examples:
+# Fixed paths:
+#   snapshot_root: "D:/lakehouse/snapshots"
+#   lake_root: "D:/lakehouse/snapshots/v0.9.0-provisional"
+#
+# Environment variables (recommended):
+#   snapshot_root: "${SNAPSHOT_ROOT:-./snapshots}"
+#   lake_root: "${LAKE_ROOT}"
 ```
 
 ## Python API
