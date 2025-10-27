@@ -33,7 +33,11 @@ DEFAULT_AGGREGATION_CONFIG = {
         "max_duration_minutes": 12.0,
         "allow_semantic_overflow": True,
         "boundary_similarity_threshold": 0.5,
+        "strong_boundary_multiplier": 0.6,
+        "semantic_check_multiplier": 1.5,
         "prefer_time_boundaries": False,
+        "prefer_semantic_boundaries": True,
+        "require_embeddings": True,
     },
     "general": {
         "preserve_metadata": True,
