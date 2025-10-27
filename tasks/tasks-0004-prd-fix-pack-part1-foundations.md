@@ -62,7 +62,7 @@
   - [x] 1.9 Create unit tests in `tests/test_speaker_roles.py` covering config loading, role determination, and enrichment logic
   - [x] 1.10 Test that invalid configs (missing keys) fail fast with clear error messages
 
-- [ ] 2.0 Implement Semantic Section Generation (R2)
+- [x] 2.0 Implement Semantic Section Generation (R2)
   - [x] 2.1 Update `SECTION_SCHEMA` in `src/lakehouse/schemas.py` to add `title` (string, non-null) and `synopsis` (string, nullable) fields
   - [x] 2.2 Load beat embeddings in `SectionGenerator._generate_sections_for_episode()` to enable semantic boundary detection
   - [x] 2.3 Update `SectionGenerator._should_break_section()` to use beat embedding similarity for topic change detection
