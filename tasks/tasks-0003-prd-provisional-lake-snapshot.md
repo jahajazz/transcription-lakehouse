@@ -56,16 +56,16 @@ Based on PRD: `0003-prd-provisional-lake-snapshot.md`
   - [x] 2.8 Implement `copy_all_artifacts(artifacts: Dict[str, List[Path]], dest_dirs: Dict[str, Path], qa_report_path: Optional[Path]) -> List[Dict[str, Any]]` that copies all discovered artifacts to snapshot, calculates checksums, and returns list of file metadata dicts
   - [x] 2.9 Add error handling for missing artifacts (fail immediately if any required artifact is missing or unreadable per FR-10)
 
-- [ ] 3.0 **Manifest Generation**
-  - [ ] 3.1 Create `src/lakehouse/snapshot/manifest.py` with `ManifestGenerator` class
-  - [ ] 3.2 Implement `get_git_commit_hash() -> str` using subprocess to run `git rev-parse HEAD` and return current commit hash (or "unknown" if not in git repo)
-  - [ ] 3.3 Implement `parse_qa_report(qa_report_path: Optional[Path]) -> Dict[str, Any]` that reads quality_assessment.md and extracts state ("PASS"/"FAIL"/"UNKNOWN"), summary, and key metrics for invariants field
-  - [ ] 3.4 Implement `determine_qa_status(qa_report_path: Optional[Path]) -> Dict[str, Any]` that returns qa_status object with state, summary, invariants, and provisional=True
-  - [ ] 3.5 Implement `get_schema_versions(lakehouse_path: Path) -> Dict[str, str]` that reads lakehouse_metadata.json or returns default schema versions (all "1.0")
-  - [ ] 3.6 Implement `build_files_array(file_metadata_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]` that converts file metadata to manifest files array format with proper media_type categorization ("parquet", "ann-index", "catalog-db", "report")
-  - [ ] 3.7 Implement `create_manifest(version: str, files: List[Dict], qa_status: Dict, schema_versions: Dict, git_commit: str, qa_report_rel_path: Optional[str]) -> Dict[str, Any]` that builds complete manifest dict with all required fields
-  - [ ] 3.8 Implement `write_manifest(manifest: Dict[str, Any], snapshot_root: Path) -> None` that writes manifest as pretty-printed JSON to lake_manifest.json at snapshot root
-  - [ ] 3.9 Add ISO-8601 UTC timestamp generation for created_at field
+- [x] 3.0 **Manifest Generation**
+  - [x] 3.1 Create `src/lakehouse/snapshot/manifest.py` with `ManifestGenerator` class
+  - [x] 3.2 Implement `get_git_commit_hash() -> str` using subprocess to run `git rev-parse HEAD` and return current commit hash (or "unknown" if not in git repo)
+  - [x] 3.3 Implement `parse_qa_report(qa_report_path: Optional[Path]) -> Dict[str, Any]` that reads quality_assessment.md and extracts state ("PASS"/"FAIL"/"UNKNOWN"), summary, and key metrics for invariants field
+  - [x] 3.4 Implement `determine_qa_status(qa_report_path: Optional[Path]) -> Dict[str, Any]` that returns qa_status object with state, summary, invariants, and provisional=True
+  - [x] 3.5 Implement `get_schema_versions(lakehouse_path: Path) -> Dict[str, str]` that reads lakehouse_metadata.json or returns default schema versions (all "1.0")
+  - [x] 3.6 Implement `build_files_array(file_metadata_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]` that converts file metadata to manifest files array format with proper media_type categorization ("parquet", "ann-index", "catalog-db", "report")
+  - [x] 3.7 Implement `create_manifest(version: str, files: List[Dict], qa_status: Dict, schema_versions: Dict, git_commit: str, qa_report_rel_path: Optional[str]) -> Dict[str, Any]` that builds complete manifest dict with all required fields
+  - [x] 3.8 Implement `write_manifest(manifest: Dict[str, Any], snapshot_root: Path) -> None` that writes manifest as pretty-printed JSON to lake_manifest.json at snapshot root
+  - [x] 3.9 Add ISO-8601 UTC timestamp generation for created_at field
 
 - [ ] 4.0 **Snapshot Validation**
   - [ ] 4.1 Create `src/lakehouse/snapshot/validator.py` with `SnapshotValidator` class
