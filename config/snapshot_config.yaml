@@ -1,14 +1,18 @@
 # Snapshot Configuration
-# Configuration for lakehouse snapshot creation
+# Configuration for lakehouse snapshot creation and consumption
 
 version:
   major: 0
   minor: 1
   patch: 0
 
-# Snapshot root directory - where snapshots will be saved
+# ============================================================
+# PRODUCER SETTINGS (Creating Snapshots)
+# ============================================================
+
+# Snapshot root directory - where snapshots will be SAVED/CREATED
+# This is used by: lakehouse snapshot create
 # Supports environment variable expansion: ${VAR_NAME:-default}
-# Default: ${SNAPSHOT_ROOT:-./snapshots}
 snapshot_root: "${SNAPSHOT_ROOT:-./snapshots}"
 
 # Auto-increment patch version on collision
@@ -17,20 +21,38 @@ auto_increment: true
 # Suffix to append to provisional snapshots
 provisional_suffix: "-provisional"
 
-# Examples of alternative configurations:
+# ============================================================
+# CONSUMER SETTINGS (Reading Snapshots)
+# ============================================================
+
+# Lake root directory - where snapshots will be READ FROM
+# This is used by consuming applications/tools to read snapshot data
+# Supports environment variable expansion: ${VAR_NAME:-default}
+lake_root: "${LAKE_ROOT}"
+
+# ============================================================
+# EXAMPLES
+# ============================================================
 #
-# Fixed path:
-# snapshot_root: "C:/Data/lake_snapshots"
+# Local development (separate locations):
+#   snapshot_root: "D:/lakehouse/snapshots"    # Where you create
+#   lake_root: "D:/lakehouse/snapshots/v0.9.0-provisional"  # What you read
+#
+# Shared network location:
+#   snapshot_root: "//fileserver/lake_snapshots"
+#   lake_root: "//fileserver/lake_snapshots/v1.0.0"
 #
 # User home directory:
-# snapshot_root: "~/lake_snapshots"
+#   snapshot_root: "~/lakehouse/snapshots"
+#   lake_root: "~/lakehouse/snapshots/v0.9.0-provisional"
 #
-# Network share:
-# snapshot_root: "//server/share/lake_snapshots"
+# Environment variables (recommended):
+#   snapshot_root: "${SNAPSHOT_ROOT:-./snapshots}"
+#   lake_root: "${LAKE_ROOT}"
 #
 # Custom version:
-# version:
-#   major: 1
-#   minor: 0
-#   patch: 0
+#   version:
+#     major: 1
+#     minor: 0
+#     patch: 0
 

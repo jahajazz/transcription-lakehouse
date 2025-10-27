@@ -25,6 +25,7 @@ DEFAULT_SNAPSHOT_CONFIG = {
         "patch": 0,
     },
     "snapshot_root": "${SNAPSHOT_ROOT:-./snapshots}",
+    "lake_root": "${LAKE_ROOT}",
     "auto_increment": True,
     "provisional_suffix": "-provisional",
 }
@@ -47,7 +48,8 @@ class SnapshotConfig:
         major: Major version number
         minor: Minor version number
         patch: Patch version number
-        snapshot_root: Base directory for snapshots
+        snapshot_root_template: Template for base directory where snapshots are created
+        lake_root_template: Template for directory where snapshots are consumed from
         auto_increment: Whether to auto-increment version on collision
         provisional_suffix: Suffix to append to provisional snapshots
     """
@@ -90,6 +92,7 @@ class SnapshotConfig:
         self.patch: int = version_config.get("patch", 0)
         
         self.snapshot_root_template: str = config.get("snapshot_root", "./snapshots")
+        self.lake_root_template: str = config.get("lake_root", "${LAKE_ROOT}")
         self.auto_increment: bool = config.get("auto_increment", True)
         self.provisional_suffix: str = config.get("provisional_suffix", "-provisional")
         
@@ -335,6 +338,52 @@ def resolve_snapshot_root(config: SnapshotConfig) -> Path:
     logger.info(f"Resolved snapshot root: {snapshot_root}")
     
     return snapshot_root
+
+
+def resolve_lake_root(config: SnapshotConfig) -> Optional[Path]:
+    """
+    Resolve lake root path from configuration.
+    
+    Supports environment variable expansion in the form ${VAR_NAME:-default}.
+    Returns None if LAKE_ROOT is not set (optional for producer-only workflows).
+    
+    Args:
+        config: SnapshotConfig instance
+    
+    Returns:
+        Resolved Path to lake root directory, or None if not configured
+    
+    Example:
+        >>> config = SnapshotConfig()
+        >>> lake_root = resolve_lake_root(config)
+        >>> print(lake_root)  # None if LAKE_ROOT not set
+    """
+    template = config.lake_root_template
+    
+    # Handle environment variable expansion: ${VAR_NAME:-default}
+    env_pattern = re.compile(r"\$\{([^:}]+)(?::-)?(.*?)\}")
+    
+    def replace_env(match):
+        var_name = match.group(1)
+        default_value = match.group(2) if match.group(2) else None
+        value = os.environ.get(var_name, default_value)
+        if value is None:
+            logger.debug(f"${{{var_name}}} is not set, lake_root will be None")
+        else:
+            logger.debug(f"Resolved ${{{var_name}}} to: {value}")
+        return value or ""
+    
+    resolved = env_pattern.sub(replace_env, template)
+    
+    # If still contains unresolved variables or is empty, return None
+    if not resolved or resolved == "None" or "${" in resolved:
+        logger.debug("Lake root not configured (LAKE_ROOT not set)")
+        return None
+    
+    lake_root = Path(resolved).expanduser().resolve()
+    logger.info(f"Resolved lake root: {lake_root}")
+    
+    return lake_root
 
 
 def ensure_snapshot_root_writable(snapshot_root: Path) -> None:

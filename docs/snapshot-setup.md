@@ -5,7 +5,29 @@
 There are two directory settings to understand when working with snapshots:
 
 1. **`snapshot_root`** - Where snapshots are **CREATED** (producer side)
-2. **`LAKE_ROOT`** - Where snapshots are **CONSUMED** (consumer side)
+2. **`lake_root`** - Where snapshots are **CONSUMED** (consumer side)
+
+Both can be configured in the same file: `config/snapshot_config.yaml`
+
+---
+
+## Quick Setup (One Config File)
+
+Edit `config/snapshot_config.yaml`:
+
+```yaml
+# Producer: Where to create snapshots
+snapshot_root: "D:/lakehouse/snapshots"
+
+# Consumer: Which snapshot to read from
+lake_root: "D:/lakehouse/snapshots/v0.9.0-provisional"
+```
+
+Both settings support environment variables:
+```yaml
+snapshot_root: "${SNAPSHOT_ROOT:-D:/lakehouse/snapshots}"
+lake_root: "${LAKE_ROOT}"
+```
 
 ---
 
@@ -55,23 +77,37 @@ If you don't set anything, snapshots will be saved to:
 
 ---
 
-## 2. Setting Up `LAKE_ROOT` (Using Snapshots)
+## 2. Setting Up `lake_root` (Using Snapshots)
 
-After creating a snapshot, **consumers** (other repos, tools, or users) set `LAKE_ROOT` to **point to** the specific snapshot they want to use.
+After creating a snapshot, **consumers** (other repos, tools, or users) set `lake_root` to **point to** the specific snapshot they want to use.
 
 This is displayed in the CLI output after snapshot creation.
 
-### Windows PowerShell:
+### Method 1: Config File (Recommended for this project)
+
+Edit `config/snapshot_config.yaml`:
+```yaml
+lake_root: "C:/Data/lake_snapshots/v0.9.0-provisional"
+```
+
+Or use environment variable:
+```yaml
+lake_root: "${LAKE_ROOT}"
+```
+
+### Method 2: Environment Variable (For consumers in other projects)
+
+**Windows PowerShell:**
 ```powershell
 $env:LAKE_ROOT = "C:\Data\lake_snapshots\v0.9.0-provisional"
 ```
 
-### Windows CMD:
+**Windows CMD:**
 ```cmd
 set LAKE_ROOT=C:\Data\lake_snapshots\v0.9.0-provisional
 ```
 
-### Linux/macOS:
+**Linux/macOS:**
 ```bash
 export LAKE_ROOT=/data/lake_snapshots/v0.9.0-provisional
 ```
@@ -81,6 +117,49 @@ This tells consuming applications which snapshot version to read from.
 ---
 
 ## Complete Workflow Example
+
+### Option A: Using Config File (Recommended)
+
+### Step 1: Configure both paths (one-time setup)
+
+Edit `config/snapshot_config.yaml`:
+```yaml
+# Producer settings
+snapshot_root: "D:/lakehouse/snapshots"
+
+# Consumer settings (update after creating each snapshot)
+lake_root: "${LAKE_ROOT}"  # Or point to specific version
+```
+
+### Step 2: Create a snapshot
+
+```bash
+lakehouse snapshot create --version 0.9.0-provisional
+```
+
+Output will show:
+```
+✓ Snapshot created with WARNINGS
+
+Version: v0.9.0-provisional
+Location: D:\lakehouse\snapshots\v0.9.0-provisional
+```
+
+### Step 3: Use the snapshot
+
+**Option 1:** Update config file:
+```yaml
+lake_root: "D:/lakehouse/snapshots/v0.9.0-provisional"
+```
+
+**Option 2:** Set environment variable:
+```powershell
+$env:LAKE_ROOT = "D:\lakehouse\snapshots\v0.9.0-provisional"
+```
+
+---
+
+### Option B: Using Environment Variables Only
 
 ### Step 1: Configure snapshot_root (one-time setup)
 
@@ -94,16 +173,6 @@ $env:SNAPSHOT_ROOT = "D:\lakehouse\snapshots"
 
 ```bash
 lakehouse snapshot create --version 0.9.0-provisional
-```
-
-Output will show:
-```
-✓ Snapshot created with WARNINGS
-
-To use this snapshot, set the LAKE_ROOT environment variable:
-
-  # Windows (PowerShell)
-  $env:LAKE_ROOT = "D:\lakehouse\snapshots\v0.9.0-provisional"
 ```
 
 ### Step 3: Use the snapshot (on consumer side)

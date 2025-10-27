@@ -159,6 +159,58 @@ class TestSnapshotDiscovery:
         assert version == "1.0.1-provisional"
 
 
+class TestLakeRootResolution:
+    """Test lake_root resolution functionality."""
+    
+    def test_resolve_lake_root_from_env(self, tmp_path, monkeypatch):
+        """Test lake_root resolution from environment variable."""
+        from lakehouse.snapshot.config import SnapshotConfig, resolve_lake_root
+        
+        test_path = str(tmp_path / "lake_v1.0.0")
+        monkeypatch.setenv("LAKE_ROOT", test_path)
+        
+        config = SnapshotConfig()
+        lake_root = resolve_lake_root(config)
+        
+        assert lake_root is not None
+        assert "lake_v1.0.0" in str(lake_root)
+    
+    def test_resolve_lake_root_not_set(self, tmp_path, monkeypatch):
+        """Test lake_root resolution when LAKE_ROOT not set."""
+        from lakehouse.snapshot.config import SnapshotConfig, resolve_lake_root
+        
+        # Ensure LAKE_ROOT is not set
+        monkeypatch.delenv("LAKE_ROOT", raising=False)
+        
+        config = SnapshotConfig()
+        lake_root = resolve_lake_root(config)
+        
+        # Should return None when not set
+        assert lake_root is None
+    
+    def test_lake_root_from_config_file(self, tmp_path):
+        """Test lake_root configured directly in config file."""
+        from lakehouse.snapshot.config import SnapshotConfig, resolve_lake_root
+        
+        config_path = tmp_path / "snapshot_config.yaml"
+        config_content = """
+version:
+  major: 1
+  minor: 0
+  patch: 0
+snapshot_root: "./snapshots"
+lake_root: "/data/lake_snapshots/v1.0.0"
+"""
+        config_path.write_text(config_content)
+        
+        config = SnapshotConfig(config_path=config_path)
+        lake_root = resolve_lake_root(config)
+        
+        assert lake_root is not None
+        assert "lake_snapshots" in str(lake_root)
+        assert "v1.0.0" in str(lake_root)
+
+
 class TestSnapshotConfig:
     """Tests for SnapshotConfig class."""
     
