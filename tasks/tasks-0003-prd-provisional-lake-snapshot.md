@@ -67,15 +67,15 @@ Based on PRD: `0003-prd-provisional-lake-snapshot.md`
   - [x] 3.8 Implement `write_manifest(manifest: Dict[str, Any], snapshot_root: Path) -> None` that writes manifest as pretty-printed JSON to lake_manifest.json at snapshot root
   - [x] 3.9 Add ISO-8601 UTC timestamp generation for created_at field
 
-- [ ] 4.0 **Snapshot Validation**
-  - [ ] 4.1 Create `src/lakehouse/snapshot/validator.py` with `SnapshotValidator` class
-  - [ ] 4.2 Implement `validate_existence(snapshot_path: Path) -> Tuple[bool, Optional[str]]` that checks if snapshot directory exists and is readable, returns (success, error_message)
-  - [ ] 4.3 Implement `validate_manifest_structure(manifest_path: Path) -> Tuple[bool, Dict[str, Any], Optional[str]]` that loads manifest JSON, validates required keys exist with correct types, returns (success, manifest_dict, error_message)
-  - [ ] 4.4 Implement `validate_inventory(snapshot_path: Path, manifest: Dict[str, Any]) -> List[Tuple[str, bool, Optional[str]]]` that checks each file in manifest files array exists, matches bytes and sha256, returns list of (file_path, success, error_message) tuples
-  - [ ] 4.5 Implement `validate_snapshot(snapshot_path: Path) -> Dict[str, Any]` that orchestrates all validation checks and returns validation result dict with status ("PASS"/"FAIL"), checks performed, warnings, and errors
-  - [ ] 4.6 Implement QA status warning logic: if qa_status.state is "UNKNOWN" or "FAIL", add to warnings but don't fail validation (per FR-25)
-  - [ ] 4.7 Implement `generate_validation_report(validation_result: Dict[str, Any]) -> str` that formats validation result as human-readable text report
-  - [ ] 4.8 Add summary statistics to validation report (total files checked, bytes verified, etc.)
+- [x] 4.0 **Snapshot Validation**
+  - [x] 4.1 Create `src/lakehouse/snapshot/validator.py` with `SnapshotValidator` class
+  - [x] 4.2 Implement `validate_existence(snapshot_path: Path) -> Tuple[bool, Optional[str]]` that checks if snapshot directory exists and is readable, returns (success, error_message)
+  - [x] 4.3 Implement `validate_manifest_structure(manifest_path: Path) -> Tuple[bool, Dict[str, Any], Optional[str]]` that loads manifest JSON, validates required keys exist with correct types, returns (success, manifest_dict, error_message)
+  - [x] 4.4 Implement `validate_inventory(snapshot_path: Path, manifest: Dict[str, Any]) -> List[Tuple[str, bool, Optional[str]]]` that checks each file in manifest files array exists, matches bytes and sha256, returns list of (file_path, success, error_message) tuples
+  - [x] 4.5 Implement `validate_snapshot(snapshot_path: Path) -> Dict[str, Any]` that orchestrates all validation checks and returns validation result dict with status ("PASS"/"FAIL"), checks performed, warnings, and errors
+  - [x] 4.6 Implement QA status warning logic: if qa_status.state is "UNKNOWN" or "FAIL", add to warnings but don't fail validation (per FR-25)
+  - [x] 4.7 Implement `generate_validation_report(validation_result: Dict[str, Any]) -> str` that formats validation result as human-readable text report
+  - [x] 4.8 Add summary statistics to validation report (total files checked, bytes verified, etc.)
 
 - [ ] 5.0 **CLI Command & Integration**
   - [ ] 5.1 Create `src/lakehouse/snapshot/creator.py` with `SnapshotCreator` class that orchestrates the full snapshot creation workflow
