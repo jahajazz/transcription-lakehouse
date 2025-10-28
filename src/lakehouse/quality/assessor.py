@@ -17,6 +17,7 @@ from datetime import datetime
 
 from lakehouse.logger import get_default_logger
 from lakehouse.quality.thresholds import QualityThresholds, ThresholdViolation, RAGStatus
+from lakehouse.quality.validator_router import ValidatorRouter
 from lakehouse.structure import LakehouseStructure
 
 # Import metric calculators
@@ -102,6 +103,9 @@ class AssessmentResult:
     assessment_duration_seconds: float = 0.0
     output_paths: Dict[str, Path] = field(default_factory=dict)
     
+    # Validator routing information (Task 3.9)
+    validation_map: Dict[str, Any] = field(default_factory=dict)
+    
     def get_critical_violations(self) -> List[ThresholdViolation]:
         """Get all error-level violations."""
         return [v for v in self.violations if v.severity == "error"]
@@ -173,6 +177,9 @@ class QualityAssessor:
         else:
             self.thresholds = self._load_thresholds(config_path, threshold_overrides)
         
+        # Load validator routing (Task 3.6)
+        self.router = self._load_validator_router()
+        
         # Data containers (loaded on demand)
         self._episodes: Optional[pd.DataFrame] = None
         self._spans: Optional[pd.DataFrame] = None
@@ -227,6 +234,28 @@ class QualityAssessor:
             logger.info(f"Applied {len(overrides)} threshold overrides from CLI")
         
         return thresholds
+    
+    def _load_validator_router(self) -> ValidatorRouter:
+        """
+        Load validator routing configuration (Task 3.6).
+        
+        Returns:
+            ValidatorRouter instance
+        """
+        try:
+            router = ValidatorRouter()
+            logger.info("Loaded validator routing configuration")
+            return router
+        except FileNotFoundError as e:
+            logger.warning(
+                f"Validator routing config not found: {e}. "
+                "All checks will run on all tables (no routing)."
+            )
+            # Return a permissive router that allows all checks
+            return None
+        except Exception as e:
+            logger.error(f"Failed to load validator routing config: {e}")
+            raise
     
     def load_episodes(self) -> pd.DataFrame:
         """
@@ -355,6 +384,86 @@ class QualityAssessor:
         
         return result
     
+    def _should_run_check_for_table(self, table_name: str, check_name: str) -> bool:
+        """
+        Check if a validation check should run for a table (Task 3.7).
+        
+        Args:
+            table_name: Name of the table (e.g., "spans", "span_embeddings")
+            check_name: Name of the check (e.g., "coverage", "dim_consistency")
+        
+        Returns:
+            True if check should run, False otherwise
+        """
+        if self.router is None:
+            # No router loaded, allow all checks
+            return True
+        
+        return self.router.should_run_check(table_name, check_name)
+    
+    def generate_table_validation_map(
+        self,
+        assess_spans: bool = True,
+        assess_beats: bool = True,
+        embeddings_available: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Generate a summary map of which checks ran on which tables (Task 3.9).
+        
+        Args:
+            assess_spans: Whether spans were assessed
+            assess_beats: Whether beats were assessed
+            embeddings_available: Whether embeddings were available
+        
+        Returns:
+            Dictionary mapping tables to their executed checks
+        
+        Example:
+            >>> assessor = QualityAssessor("lakehouse")
+            >>> validation_map = assessor.generate_table_validation_map()
+            >>> validation_map['spans']
+            {'role': 'base', 'checks_run': ['coverage', 'length_buckets', ...]}
+        """
+        validation_map = {}
+        
+        # If no router, create simple map
+        if self.router is None:
+            return {
+                "note": "No validator routing configured - all checks ran on all tables",
+                "tables_assessed": []
+            }
+        
+        # Determine which tables were assessed
+        tables_assessed = []
+        if assess_spans:
+            tables_assessed.append("spans")
+        if assess_beats:
+            tables_assessed.append("beats")
+        if embeddings_available and assess_spans:
+            tables_assessed.append("span_embeddings")
+        if embeddings_available and assess_beats:
+            tables_assessed.append("beat_embeddings")
+        
+        # For each table, list which checks ran
+        for table_name in tables_assessed:
+            role = self.router.get_table_role(table_name)
+            configured_checks = self.router.get_checks_for_table(table_name)
+            
+            validation_map[table_name] = {
+                "role": role,
+                "configured_checks": configured_checks,
+                "check_count": len(configured_checks),
+            }
+        
+        # Add summary
+        validation_map["_summary"] = {
+            "total_tables_assessed": len(tables_assessed),
+            "tables_assessed": tables_assessed,
+            "router_loaded": True,
+        }
+        
+        return validation_map
+    
     def run_assessment(
         self,
         assess_spans: bool = True,
@@ -436,19 +545,22 @@ class QualityAssessor:
         # Task 5.6.4: Call all metric calculators
         logger.info("Calculating quality metrics...")
         
-        # Category A: Coverage & Count Metrics
+        # Category A: Coverage & Count Metrics (Task 3.7: Route to spans only)
         if assess_spans or assess_beats:
-            logger.info("Calculating coverage metrics...")
-            coverage_metrics = coverage.calculate_episode_coverage(
-                episodes, spans_df, beats_df
-            )
-            metrics.coverage_metrics = coverage_metrics
-            
-            # Validate coverage thresholds
-            coverage_violations = coverage.validate_coverage_thresholds(
-                coverage_metrics, self.thresholds
-            )
-            all_violations.extend(coverage_violations)
+            if self._should_run_check_for_table("spans", "coverage"):
+                logger.info("Calculating coverage metrics...")
+                coverage_metrics = coverage.calculate_episode_coverage(
+                    episodes, spans_df, beats_df
+                )
+                metrics.coverage_metrics = coverage_metrics
+                
+                # Validate coverage thresholds
+                coverage_violations = coverage.validate_coverage_thresholds(
+                    coverage_metrics, self.thresholds
+                )
+                all_violations.extend(coverage_violations)
+            else:
+                logger.info("Skipping coverage metrics (not applicable for current tables)")
         
         # Category B: Distribution Metrics (for spans)
         if assess_spans and spans_df is not None:
@@ -502,7 +614,71 @@ class QualityAssessor:
             )
             all_violations.extend(dist_violations)
         
-        # Category C: Integrity Metrics (combines spans and beats)
+        # Category C: Integrity Metrics (check spans and beats separately)
+        # CRITICAL FIX: Spans and beats have hierarchical relationship (beats contain spans)
+        # so they must be checked separately to avoid false positives for timestamp regressions
+        # and text duplicates. See CRITICAL_ISSUES_REMEDIATION_PLAN.md for details.
+        
+        span_integrity = {}
+        beat_integrity = {}
+        
+        # Check span integrity separately
+        if spans_df is not None:
+            logger.info("Calculating span integrity metrics...")
+            
+            span_monotonicity = integrity.check_timestamp_monotonicity(spans_df, segment_type="span")
+            span_violations = integrity.detect_integrity_violations(spans_df, segment_type="span")
+            span_duplicates = integrity.detect_duplicates(
+                spans_df,
+                fuzzy_threshold=self.thresholds.near_duplicate_threshold,
+                segment_type="span",
+                force_near_duplicate_check=force_near_duplicate_check
+            )
+            
+            span_integrity = {
+                **span_monotonicity,
+                **span_violations,
+                **span_duplicates,
+            }
+            
+            # Validate span integrity thresholds
+            span_integrity_violations = integrity.validate_integrity_thresholds(
+                span_integrity, self.thresholds, segment_type="span"
+            )
+            all_violations.extend(span_integrity_violations)
+        
+        # Check beat integrity separately
+        if beats_df is not None:
+            logger.info("Calculating beat integrity metrics...")
+            
+            beat_monotonicity = integrity.check_timestamp_monotonicity(beats_df, segment_type="beat")
+            beat_violations = integrity.detect_integrity_violations(beats_df, segment_type="beat")
+            beat_duplicates = integrity.detect_duplicates(
+                beats_df,
+                fuzzy_threshold=self.thresholds.near_duplicate_threshold,
+                segment_type="beat",
+                force_near_duplicate_check=force_near_duplicate_check
+            )
+            
+            beat_integrity = {
+                **beat_monotonicity,
+                **beat_violations,
+                **beat_duplicates,
+            }
+            
+            # Validate beat integrity thresholds
+            beat_integrity_violations = integrity.validate_integrity_thresholds(
+                beat_integrity, self.thresholds, segment_type="beat"
+            )
+            all_violations.extend(beat_integrity_violations)
+        
+        # Combine integrity metrics (keep as dict with separate span/beat sections)
+        metrics.integrity_metrics = {
+            'spans': span_integrity,
+            'beats': beat_integrity,
+        }
+        
+        # Keep combined_segments for other metrics that legitimately need it
         combined_segments = []
         if spans_df is not None:
             combined_segments.append(spans_df)
@@ -510,29 +686,9 @@ class QualityAssessor:
             combined_segments.append(beats_df)
         
         if combined_segments:
-            logger.info("Calculating integrity metrics...")
             all_segments = pd.concat(combined_segments, ignore_index=True)
-            
-            integrity_metrics = integrity.check_timestamp_monotonicity(all_segments)
-            violations_data = integrity.detect_integrity_violations(all_segments)
-            duplicates_data = integrity.detect_duplicates(
-                all_segments,
-                fuzzy_threshold=self.thresholds.near_duplicate_threshold,
-                force_near_duplicate_check=force_near_duplicate_check
-            )
-            
-            # Combine integrity metrics
-            metrics.integrity_metrics = {
-                **integrity_metrics,
-                **violations_data,
-                **duplicates_data,
-            }
-            
-            # Validate integrity thresholds
-            integrity_violations = integrity.validate_integrity_thresholds(
-                metrics.integrity_metrics, self.thresholds
-            )
-            all_violations.extend(integrity_violations)
+        else:
+            all_segments = None
         
         # Category D: Balance Metrics (combines spans and beats)
         if combined_segments:
@@ -559,31 +715,37 @@ class QualityAssessor:
         # Category F: Embedding Sanity Checks (Task 5.6.7: FR-50 - graceful handling)
         embedding_metrics_dict = {}
         
-        # Process span embeddings if available
+        # Process span embeddings if available (Task 3.7: Route embedding checks to embedding tables)
         if assess_spans and spans_df is not None and span_embeddings_matrix is not None:
-            logger.info("Calculating span embedding metrics...")
-            embedding_metrics_dict['spans'] = self._calculate_embedding_metrics(
-                spans_df, span_embeddings_matrix, "spans"
-            )
-            
-            # Validate embedding thresholds
-            emb_violations = self._validate_embedding_metrics(
-                embedding_metrics_dict['spans']
-            )
-            all_violations.extend(emb_violations)
+            if self._should_run_check_for_table("span_embeddings", "dim_consistency"):
+                logger.info("Calculating span embedding metrics...")
+                embedding_metrics_dict['spans'] = self._calculate_embedding_metrics(
+                    spans_df, span_embeddings_matrix, "spans"
+                )
+                
+                # Validate embedding thresholds
+                emb_violations = self._validate_embedding_metrics(
+                    embedding_metrics_dict['spans']
+                )
+                all_violations.extend(emb_violations)
+            else:
+                logger.info("Skipping span embedding metrics (routing disabled)")
         
-        # Process beat embeddings if available
+        # Process beat embeddings if available (Task 3.7: Route embedding checks to embedding tables)
         if assess_beats and beats_df is not None and beat_embeddings_matrix is not None:
-            logger.info("Calculating beat embedding metrics...")
-            embedding_metrics_dict['beats'] = self._calculate_embedding_metrics(
-                beats_df, beat_embeddings_matrix, "beats"
-            )
-            
-            # Validate embedding thresholds
-            emb_violations = self._validate_embedding_metrics(
-                embedding_metrics_dict['beats']
-            )
-            all_violations.extend(emb_violations)
+            if self._should_run_check_for_table("beat_embeddings", "dim_consistency"):
+                logger.info("Calculating beat embedding metrics...")
+                embedding_metrics_dict['beats'] = self._calculate_embedding_metrics(
+                    beats_df, beat_embeddings_matrix, "beats"
+                )
+                
+                # Validate embedding thresholds
+                emb_violations = self._validate_embedding_metrics(
+                    embedding_metrics_dict['beats']
+                )
+                all_violations.extend(emb_violations)
+            else:
+                logger.info("Skipping beat embedding metrics (routing disabled)")
         
         metrics.embedding_metrics = embedding_metrics_dict
         
@@ -644,6 +806,13 @@ class QualityAssessor:
         # Calculate assessment duration
         duration = time.time() - start_time
         
+        # Task 3.9: Generate table validation map
+        validation_map = self.generate_table_validation_map(
+            assess_spans=assess_spans,
+            assess_beats=assess_beats,
+            embeddings_available=metrics.embeddings_available
+        )
+        
         # Task 5.6.5: Create result
         result = AssessmentResult(
             metrics=metrics,
@@ -654,6 +823,7 @@ class QualityAssessor:
             total_spans=len(spans_df) if spans_df is not None else 0,
             total_beats=len(beats_df) if beats_df is not None else 0,
             assessment_duration_seconds=round(duration, 2),
+            validation_map=validation_map,
         )
         
         logger.info(

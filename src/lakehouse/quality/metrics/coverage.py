@@ -16,18 +16,83 @@ from lakehouse.quality.thresholds import QualityThresholds, ThresholdViolation
 logger = get_default_logger()
 
 
+def calculate_overlap_aware_union_duration(
+    segments: pd.DataFrame,
+    start_col: str = 'start_time',
+    end_col: str = 'end_time'
+) -> float:
+    """
+    Calculate total duration covered by segments using overlap-aware union (Task 4.2).
+    
+    Merges overlapping intervals and sums the union duration. This ensures:
+    - Overlapping segments are counted only once
+    - Coverage percentage can never exceed 100%
+    
+    Algorithm:
+    1. Sort segments by start time
+    2. Merge overlapping or adjacent intervals
+    3. Sum the durations of merged intervals
+    
+    Args:
+        segments: DataFrame with time intervals
+        start_col: Name of start time column (default: 'start_time')
+        end_col: Name of end time column (default: 'end_time')
+    
+    Returns:
+        Total duration in seconds covered by the union of all intervals
+    
+    Example:
+        >>> segments = pd.DataFrame({
+        ...     'start_time': [0.0, 10.0, 15.0],
+        ...     'end_time': [12.0, 20.0, 25.0]
+        ... })
+        >>> # Intervals: [0-12], [10-20], [15-25]
+        >>> # Union: [0-12] merged with [10-20] = [0-20], then merged with [15-25] = [0-25]
+        >>> calculate_overlap_aware_union_duration(segments)
+        25.0
+    """
+    if len(segments) == 0:
+        return 0.0
+    
+    # Extract and sort intervals by start time
+    intervals = segments[[start_col, end_col]].values
+    intervals = sorted(intervals, key=lambda x: x[0])
+    
+    # Merge overlapping intervals
+    merged = []
+    current_start, current_end = intervals[0]
+    
+    for start, end in intervals[1:]:
+        if start <= current_end:
+            # Overlapping or adjacent - merge by extending current_end
+            current_end = max(current_end, end)
+        else:
+            # Non-overlapping - save current interval and start new one
+            merged.append((current_start, current_end))
+            current_start, current_end = start, end
+    
+    # Don't forget the last interval
+    merged.append((current_start, current_end))
+    
+    # Sum durations of merged intervals
+    total_duration = sum(end - start for start, end in merged)
+    
+    return total_duration
+
+
 def calculate_episode_coverage(
     episodes: pd.DataFrame,
     spans: Optional[pd.DataFrame] = None,
     beats: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
     """
-    Calculate coverage metrics for episodes (FR-7).
+    Calculate coverage metrics for episodes (FR-7, Task 4.1).
     
     For each episode, calculates:
     - Total episode duration (from metadata)
-    - Sum of span durations and sum of beat durations
-    - Coverage percentage: (sum_durations / episode_duration) * 100
+    - Overlap-aware union duration for spans (Task 4.1, 4.2)
+    - Coverage percentage: (union_duration / episode_duration) * 100 (Task 4.3)
+    - Coverage is capped at 100% to handle edge cases
     - Total span count and total beat count
     
     Args:
@@ -78,35 +143,34 @@ def calculate_episode_coverage(
             'episode_duration_seconds': round(episode_duration, 2),
         }
         
-        # Calculate span metrics
+        # Calculate span metrics (Task 4.1: Use overlap-aware union)
         if spans is not None and len(spans) > 0:
             episode_spans = spans[spans['episode_id'] == episode_id]
             
             if len(episode_spans) > 0:
-                # Calculate durations
-                if 'duration' in episode_spans.columns:
-                    span_durations = episode_spans['duration'].sum()
-                else:
-                    span_durations = (episode_spans['end_time'] - episode_spans['start_time']).sum()
-                
+                # Use overlap-aware union to calculate coverage
+                span_union_duration = calculate_overlap_aware_union_duration(episode_spans)
                 span_count = len(episode_spans)
-                span_coverage_pct = (span_durations / episode_duration * 100) if episode_duration > 0 else 0.0
+                span_coverage_pct = (span_union_duration / episode_duration * 100) if episode_duration > 0 else 0.0
+                
+                # Ensure coverage never exceeds 100% (Task 4.3)
+                span_coverage_pct = min(span_coverage_pct, 100.0)
                 
                 metrics.update({
                     'span_count': span_count,
-                    'span_total_duration_seconds': round(span_durations, 2),
+                    'span_union_duration_seconds': round(span_union_duration, 2),
                     'span_coverage_percent': round(span_coverage_pct, 2),
                 })
             else:
                 metrics.update({
                     'span_count': 0,
-                    'span_total_duration_seconds': 0.0,
+                    'span_union_duration_seconds': 0.0,
                     'span_coverage_percent': 0.0,
                 })
         else:
             metrics.update({
                 'span_count': None,
-                'span_total_duration_seconds': None,
+                'span_union_duration_seconds': None,
                 'span_coverage_percent': None,
             })
         
@@ -150,27 +214,33 @@ def calculate_episode_coverage(
         'total_episode_duration_seconds': round(episodes['duration_seconds'].sum(), 2),
     }
     
-    # Global span metrics
+    # Global span metrics (Task 4.1: Compute per-episode union, then sum)
     if spans is not None and len(spans) > 0:
-        if 'duration' in spans.columns:
-            total_span_duration = spans['duration'].sum()
-        else:
-            total_span_duration = (spans['end_time'] - spans['start_time']).sum()
+        # Calculate union duration per episode, then sum across episodes
+        total_union_duration = 0.0
+        for episode_id in episodes['episode_id']:
+            episode_spans = spans[spans['episode_id'] == episode_id]
+            if len(episode_spans) > 0:
+                episode_union = calculate_overlap_aware_union_duration(episode_spans)
+                total_union_duration += episode_union
         
         global_span_coverage = (
-            (total_span_duration / global_metrics['total_episode_duration_seconds'] * 100)
+            (total_union_duration / global_metrics['total_episode_duration_seconds'] * 100)
             if global_metrics['total_episode_duration_seconds'] > 0 else 0.0
         )
         
+        # Ensure coverage never exceeds 100% (Task 4.3)
+        global_span_coverage = min(global_span_coverage, 100.0)
+        
         global_metrics.update({
             'total_spans': len(spans),
-            'total_span_duration_seconds': round(total_span_duration, 2),
+            'total_span_union_duration_seconds': round(total_union_duration, 2),
             'global_span_coverage_percent': round(global_span_coverage, 2),
         })
     else:
         global_metrics.update({
             'total_spans': 0,
-            'total_span_duration_seconds': 0.0,
+            'total_span_union_duration_seconds': 0.0,
             'global_span_coverage_percent': 0.0,
         })
     

@@ -7,12 +7,13 @@ normalized utterances.
 
 import click
 from pathlib import Path
+from typing import Any, Dict, List
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
 
 from lakehouse.cli import cli, common_options
-from lakehouse.logger import configure_logging
+from lakehouse.logger import configure_logging, get_default_logger
 from lakehouse.ingestion.writer import read_parquet, write_versioned_parquet
 from lakehouse.aggregation.spans import generate_spans
 from lakehouse.aggregation.beats import generate_beats
@@ -24,6 +25,7 @@ from lakehouse.config import load_config
 
 
 console = Console(legacy_windows=False)
+logger = get_default_logger()
 
 
 @cli.command()
@@ -164,6 +166,76 @@ def materialize(ctx, version, spans_only, beats_only, sections_only, embeddings_
         raise click.Abort()
 
 
+def _apply_duration_guardrails(
+    segments: List[Dict[str, Any]],
+    segment_type: str,
+    max_duration: float,
+) -> List[Dict[str, Any]]:
+    """
+    Apply duration guardrails to filter out excessively long segments.
+    
+    Segments longer than max_duration are likely fallback/error cases where
+    entire episodes became single segments. These outliers skew statistics
+    (std-dev, P95) and indicate data quality issues.
+    
+    Args:
+        segments: List of segment dictionaries
+        segment_type: Type of segment ("span" or "beat")
+        max_duration: Maximum allowed duration in seconds (typically 2x the quality threshold)
+    
+    Returns:
+        Filtered list of segments with outliers removed
+    """
+    if not segments:
+        return segments
+    
+    original_count = len(segments)
+    filtered_segments = []
+    dropped_segments = []
+    
+    for segment in segments:
+        duration = segment.get('duration', 0)
+        if duration <= max_duration:
+            filtered_segments.append(segment)
+        else:
+            dropped_segments.append({
+                'id': segment.get(f'{segment_type}_id', 'unknown'),
+                'episode_id': segment.get('episode_id', 'unknown'),
+                'duration': duration,
+            })
+    
+    dropped_count = len(dropped_segments)
+    
+    if dropped_count > 0:
+        console.print(
+            f"[yellow]Dropped {dropped_count} {segment_type}(s) with duration > {max_duration}s "
+            f"({dropped_count / original_count * 100:.1f}% of total)[/yellow]"
+        )
+        
+        # Log details of dropped segments
+        if dropped_count <= 10:
+            for seg in dropped_segments:
+                console.print(
+                    f"  - {seg['id']} (episode: {seg['episode_id']}, duration: {seg['duration']:.1f}s)"
+                )
+        else:
+            console.print(f"  - Top 5 longest:")
+            sorted_dropped = sorted(dropped_segments, key=lambda x: x['duration'], reverse=True)
+            for seg in sorted_dropped[:5]:
+                console.print(
+                    f"    - {seg['id']} (episode: {seg['episode_id']}, duration: {seg['duration']:.1f}s)"
+                )
+            console.print(f"  - ... and {dropped_count - 5} more")
+    
+    logger.info(
+        f"Duration guardrails for {segment_type}s: "
+        f"kept {len(filtered_segments)}/{original_count}, "
+        f"dropped {dropped_count} outliers (>{max_duration}s)"
+    )
+    
+    return filtered_segments
+
+
 def _generate_spans(lakehouse_path, version, config):
     """Generate spans from utterances."""
     # Load utterances
@@ -190,6 +262,15 @@ def _generate_spans(lakehouse_path, version, config):
             spans_config = config.get('spans', {})
             spans = generate_spans(utterances, config=spans_config)
             all_spans.extend(spans)
+    
+    # Apply duration guardrails (drop excessively long spans)
+    # These are likely fallback/error cases where entire episodes became single spans
+    if all_spans:
+        all_spans = _apply_duration_guardrails(
+            all_spans, 
+            segment_type="span",
+            max_duration=240.0  # 2 * span_length_max (120s)
+        )
     
     # Write spans
     if all_spans:
@@ -222,6 +303,15 @@ def _generate_beats(lakehouse_path, version, config):
         # Generate beats
         beats_config = config.get('beats', {})
         beats = generate_beats(spans, config=beats_config)
+    
+    # Apply duration guardrails (drop excessively long beats)
+    # These are likely fallback/error cases where entire episodes became single beats
+    if beats:
+        beats = _apply_duration_guardrails(
+            beats,
+            segment_type="beat",
+            max_duration=360.0  # 2 * beat_length_max (180s)
+        )
     
     # Write beats
     if beats:

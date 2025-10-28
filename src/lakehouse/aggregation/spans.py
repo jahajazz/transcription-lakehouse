@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 from lakehouse.aggregation.base import UtteranceAggregator
 from lakehouse.ids import generate_span_id
 from lakehouse.logger import get_default_logger
+from lakehouse.speaker_roles import enrich_spans_with_speaker_metadata  # Task 5.6
+from lakehouse.config import load_speaker_roles  # Task 5.6
 
 
 logger = get_default_logger()
@@ -85,6 +87,22 @@ class SpanGenerator(UtteranceAggregator):
             all_spans.extend(episode_spans)
             
             logger.info(f"Generated {len(episode_spans)} spans from {len(episode_utterances)} utterances for {episode_id}")
+        
+        # Task 5.6: Enrich spans with speaker metadata (speaker_canonical, speaker_role, is_expert)
+        try:
+            speaker_config = load_speaker_roles()
+            all_spans = enrich_spans_with_speaker_metadata(all_spans, speaker_config)
+            logger.info(f"Enriched {len(all_spans)} spans with speaker metadata")
+        except Exception as e:
+            logger.warning(f"Failed to enrich spans with speaker metadata: {e}")
+            # Add default values if enrichment fails
+            for span in all_spans:
+                if 'speaker_canonical' not in span:
+                    span['speaker_canonical'] = span.get('speaker', 'Unknown')
+                if 'speaker_role' not in span:
+                    span['speaker_role'] = 'other'
+                if 'is_expert' not in span:
+                    span['is_expert'] = False
         
         # Compute and log statistics
         stats = self.compute_statistics(all_spans)

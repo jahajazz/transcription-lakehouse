@@ -81,7 +81,10 @@ class TestEndToEndPipeline:
         # 8. AGGREGATION: Generate sections
         sections = generate_sections(
             beats,
-            config={"min_duration_minutes": 0.1}  # Low threshold for test
+            config={
+                "min_duration_minutes": 0.1,  # Low threshold for test
+                "require_embeddings": False  # Test without embeddings (Task 6.2)
+            }
         )
         
         assert len(sections) > 0

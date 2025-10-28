@@ -12,6 +12,7 @@ from pathlib import Path
 
 from lakehouse.logger import get_default_logger
 from lakehouse.schemas import get_schema, validate_dataframe_schema
+from lakehouse.quality.validator_router import ValidatorRouter
 
 
 logger = get_default_logger()
@@ -606,6 +607,35 @@ def check_numeric_quality(df: pd.DataFrame, artifact_type: str) -> List[Validati
     return checks
 
 
+def _get_table_name_for_artifact(artifact_type: str, filename: str = "") -> str:
+    """
+    Map artifact type to table name for validator routing.
+    
+    Args:
+        artifact_type: Type of artifact (span, beat, section, embedding, etc.)
+        filename: Optional filename to help determine specific embedding type
+    
+    Returns:
+        Table name for use with validator routing config
+    """
+    type_map = {
+        "span": "spans",
+        "beat": "beats", 
+        "section": "sections",
+        "utterance": "utterances",  # Not in routing config, will return "unknown"
+    }
+    
+    # For embeddings, extract from filename if available
+    if artifact_type == "embedding":
+        if "span" in filename.lower():
+            return "span_embeddings"
+        elif "beat" in filename.lower():
+            return "beat_embeddings"
+        return "embeddings"  # Generic, not in routing config
+    
+    return type_map.get(artifact_type, artifact_type)
+
+
 def validate_artifact(
     df: pd.DataFrame,
     artifact_type: str,
@@ -625,6 +655,14 @@ def validate_artifact(
         ValidationReport with all check results
     """
     report = ValidationReport(artifact_type, version)
+    
+    # Load validator router for check routing (R3: Validator Routing System)
+    router = None
+    try:
+        router = ValidatorRouter()
+        logger.debug("Validator router loaded successfully")
+    except Exception as e:
+        logger.warning(f"Could not load validator router: {e}. All checks will run.")
     
     logger.info(f"Validating {artifact_type} artifact (v{version}) with {len(df)} rows")
     
@@ -661,7 +699,7 @@ def validate_artifact(
                 severity="error"
             ))
     
-    # Run specialized checks
+    # Run specialized checks with validator routing
     specialized_checks = [
         check_timestamps,
         check_text_quality,
@@ -670,7 +708,30 @@ def validate_artifact(
         check_numeric_quality,
     ]
     
+    # Map artifact type to table name for routing
+    filename = config.get("filename", "") if config else ""
+    table_name = _get_table_name_for_artifact(artifact_type, filename)
+    
+    # Map check functions to their names in validator routing config
+    check_to_name_map = {
+        check_timestamps: "timestamp_order",  # Timestamp ordering and monotonicity
+        check_text_quality: "text_quality",   # Text length, emptiness, quality
+        check_id_quality: "id_join_back",     # ID validation and join-back capability
+        check_referential_integrity: "referential_integrity",  # Generic integrity checks
+        check_numeric_quality: "numeric_quality",  # Generic numeric checks
+    }
+    
     for check_func in specialized_checks:
+        # Determine if this check should run based on validator routing
+        check_name = check_to_name_map.get(check_func, check_func.__name__)
+        should_run = True
+        
+        if router:
+            should_run = router.should_run_check(table_name, check_name)
+            if not should_run:
+                logger.debug(f"Skipping {check_name} for {table_name} (not configured in validator routing)")
+                continue
+        
         try:
             results = check_func(df, artifact_type)
             for result in results:
@@ -731,7 +792,9 @@ def validate_lakehouse(
         for parquet_file in parquet_files:
             try:
                 df = pd.read_parquet(parquet_file)
-                report = validate_artifact(df, artifact_type, version, config)
+                # Pass filename in config for validator routing
+                file_config = {"filename": parquet_file.stem, **(config or {})}
+                report = validate_artifact(df, artifact_type, version, file_config)
                 reports[f"{artifact_type}_{parquet_file.stem}"] = report
             except Exception as e:
                 logger.error(f"Error validating {parquet_file}: {e}")

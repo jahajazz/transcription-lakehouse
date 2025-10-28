@@ -1020,5 +1020,240 @@ class TestAssessmentIntegration:
         assert isinstance(result.rag_status, RAGStatus)
 
 
+# ============================================================================
+# Task 4.10 & 4.11: Fix Pack - Part 1 Quality Assessment Tests
+# ============================================================================
+
+class TestFixPackPart1Improvements:
+    """Test improvements from Fix Pack — Part-1 Foundations (Tasks 4.10, 4.11)."""
+    
+    def test_coverage_never_exceeds_100_percent(self, mock_lakehouse, output_dir):
+        """
+        Test that coverage percentage never exceeds 100% (Task 4.10).
+        
+        Verifies overlap-aware union prevents >100% coverage even with
+        overlapping spans.
+        """
+        assessor = QualityAssessor(
+            lakehouse_path=mock_lakehouse['lakehouse_path'],
+            version='v1'
+        )
+        
+        result = assessor.run_assessment(
+            assess_spans=True,
+            assess_beats=True,
+            output_dir=output_dir,
+            use_timestamp=False
+        )
+        
+        # Check global coverage
+        coverage = result.metrics.coverage_metrics
+        assert coverage is not None
+        
+        global_metrics = coverage.get('global', {})
+        global_span_coverage = global_metrics.get('global_span_coverage_percent', 0)
+        global_beat_coverage = global_metrics.get('global_beat_coverage_percent', 0)
+        
+        # Coverage should never exceed 100%
+        assert global_span_coverage <= 100.0, \
+            f"Global span coverage {global_span_coverage}% exceeds 100%"
+        assert global_beat_coverage <= 100.0, \
+            f"Global beat coverage {global_beat_coverage}% exceeds 100%"
+        
+        # Check per-episode coverage
+        per_episode = coverage.get('per_episode', [])
+        for episode_metrics in per_episode:
+            span_coverage = episode_metrics.get('span_coverage_percent')
+            if span_coverage is not None:
+                assert span_coverage <= 100.0, \
+                    f"Episode {episode_metrics.get('episode_id')} span coverage " \
+                    f"{span_coverage}% exceeds 100%"
+            
+            beat_coverage = episode_metrics.get('beat_coverage_percent')
+            if beat_coverage is not None:
+                assert beat_coverage <= 100.0, \
+                    f"Episode {episode_metrics.get('episode_id')} beat coverage " \
+                    f"{beat_coverage}% exceeds 100%"
+    
+    def test_length_compliance_buckets_sum_to_100_percent(self, mock_lakehouse, output_dir):
+        """
+        Test that length compliance buckets sum to exactly 100% (Task 4.10).
+        
+        Verifies that too_short_percent + within_bounds_percent + too_long_percent = 100.0
+        """
+        assessor = QualityAssessor(
+            lakehouse_path=mock_lakehouse['lakehouse_path'],
+            version='v1'
+        )
+        
+        result = assessor.run_assessment(
+            assess_spans=True,
+            assess_beats=True,
+            output_dir=output_dir,
+            use_timestamp=False
+        )
+        
+        distribution = result.metrics.distribution_metrics
+        assert distribution is not None
+        
+        # Check span compliance buckets
+        span_compliance = distribution.get('spans', {}).get('compliance', {})
+        if span_compliance and span_compliance.get('total_count', 0) > 0:
+            too_short = span_compliance.get('too_short_percent', 0)
+            within_bounds = span_compliance.get('within_bounds_percent', 0)
+            too_long = span_compliance.get('too_long_percent', 0)
+            
+            bucket_sum = too_short + within_bounds + too_long
+            
+            # Allow 0.01% tolerance for rounding
+            assert abs(bucket_sum - 100.0) < 0.01, \
+                f"Span buckets sum to {bucket_sum}% instead of 100% " \
+                f"(too_short={too_short}%, within_bounds={within_bounds}%, too_long={too_long}%)"
+        
+        # Check beat compliance buckets
+        beat_compliance = distribution.get('beats', {}).get('compliance', {})
+        if beat_compliance and beat_compliance.get('total_count', 0) > 0:
+            too_short = beat_compliance.get('too_short_percent', 0)
+            within_bounds = beat_compliance.get('within_bounds_percent', 0)
+            too_long = beat_compliance.get('too_long_percent', 0)
+            
+            bucket_sum = too_short + within_bounds + too_long
+            
+            # Allow 0.01% tolerance for rounding
+            assert abs(bucket_sum - 100.0) < 0.01, \
+                f"Beat buckets sum to {bucket_sum}% instead of 100% " \
+                f"(too_short={too_short}%, within_bounds={within_bounds}%, too_long={too_long}%)"
+    
+    def test_executive_summary_consistency(self, mock_lakehouse, output_dir):
+        """
+        Test that Executive Summary counts match detailed sections (Task 4.10).
+        
+        Ensures episode/span/beat counts are consistent across
+        Executive Summary, coverage metrics, and distribution metrics.
+        """
+        assessor = QualityAssessor(
+            lakehouse_path=mock_lakehouse['lakehouse_path'],
+            version='v1'
+        )
+        
+        result = assessor.run_assessment(
+            assess_spans=True,
+            assess_beats=True,
+            output_dir=output_dir,
+            use_timestamp=False
+        )
+        
+        # Get counts from different sources
+        summary_episodes = result.total_episodes
+        summary_spans = result.total_spans
+        summary_beats = result.total_beats
+        
+        coverage = result.metrics.coverage_metrics
+        global_metrics = coverage.get('global', {})
+        
+        coverage_episodes = global_metrics.get('total_episodes', 0)
+        coverage_spans = global_metrics.get('total_spans', 0)
+        coverage_beats = global_metrics.get('total_beats', 0)
+        
+        # Verify consistency
+        assert summary_episodes == coverage_episodes, \
+            f"Episode count mismatch: Summary={summary_episodes}, Coverage={coverage_episodes}"
+        
+        if coverage_spans:  # May be None if no spans
+            assert summary_spans == coverage_spans, \
+                f"Span count mismatch: Summary={summary_spans}, Coverage={coverage_spans}"
+        
+        if coverage_beats:  # May be None if no beats
+            assert summary_beats == coverage_beats, \
+                f"Beat count mismatch: Summary={summary_beats}, Coverage={coverage_beats}"
+        
+        # Also check against distribution metrics
+        distribution = result.metrics.distribution_metrics
+        
+        span_stats = distribution.get('spans', {}).get('statistics', {})
+        if span_stats:
+            dist_span_count = span_stats.get('count', 0)
+            assert summary_spans == dist_span_count, \
+                f"Span count mismatch with distribution: Summary={summary_spans}, Distribution={dist_span_count}"
+        
+        beat_stats = distribution.get('beats', {}).get('statistics', {})
+        if beat_stats:
+            dist_beat_count = beat_stats.get('count', 0)
+            assert summary_beats == dist_beat_count, \
+                f"Beat count mismatch with distribution: Summary={summary_beats}, Distribution={dist_beat_count}"
+    
+    def test_duplicate_detection_with_min_text_length(self, mock_lakehouse, output_dir):
+        """
+        Test that duplicate detection applies minimum text length filter (Task 4.11).
+        
+        Verifies that the min_text_length parameter is used and short texts
+        are excluded from duplicate detection.
+        """
+        assessor = QualityAssessor(
+            lakehouse_path=mock_lakehouse['lakehouse_path'],
+            version='v1'
+        )
+        
+        result = assessor.run_assessment(
+            assess_spans=True,
+            assess_beats=True,
+            output_dir=output_dir,
+            use_timestamp=False
+        )
+        
+        integrity = result.metrics.integrity_metrics
+        assert integrity is not None
+        
+        # Check that min_text_length is being used
+        if 'min_text_length' in integrity:
+            assert integrity['min_text_length'] == 10, \
+                "Duplicate detection should use min_text_length=10"
+        
+        # Check that segments_checked is reported
+        if 'segments_checked' in integrity:
+            total_segments = integrity.get('total_segments', 0)
+            segments_checked = integrity.get('segments_checked', 0)
+            
+            # segments_checked should be <= total_segments
+            assert segments_checked <= total_segments, \
+                f"Checked {segments_checked} segments but only {total_segments} total exist"
+    
+    def test_duplicate_checks_separate_for_spans_and_beats(self, mock_lakehouse, output_dir):
+        """
+        Test that duplicate checks show separate counts for spans and beats (Task 4.11).
+        
+        Verifies that duplicate detection runs separately at each level.
+        """
+        assessor = QualityAssessor(
+            lakehouse_path=mock_lakehouse['lakehouse_path'],
+            version='v1'
+        )
+        
+        # Run assessment for both spans and beats
+        result = assessor.run_assessment(
+            assess_spans=True,
+            assess_beats=True,
+            output_dir=output_dir,
+            use_timestamp=False
+        )
+        
+        # Check that integrity metrics exist
+        integrity = result.metrics.integrity_metrics
+        assert integrity is not None
+        
+        # Duplicate metrics should be present
+        assert 'exact_duplicate_count' in integrity
+        assert 'exact_duplicate_percent' in integrity
+        
+        # Verify duplicate percentages are in valid range
+        exact_dup_pct = integrity.get('exact_duplicate_percent', 0)
+        near_dup_pct = integrity.get('near_duplicate_percent', 0)
+        
+        assert 0 <= exact_dup_pct <= 100, \
+            f"Exact duplicate percentage {exact_dup_pct}% out of range [0, 100]"
+        assert 0 <= near_dup_pct <= 100, \
+            f"Near duplicate percentage {near_dup_pct}% out of range [0, 100]"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -131,6 +131,9 @@ def create_sample_spans(
             'end_time': end,
             'duration': end - start,
             'speaker': speaker,
+            'speaker_canonical': speaker,  # Task 6.2: New field
+            'speaker_role': 'other',  # Task 6.2: New field
+            'is_expert': False,  # Task 6.2: New field
             'text': text,
             'segment_type': segment_type,
         })
@@ -292,6 +295,9 @@ def create_balanced_spans(
                 'end_time': current_time + duration,
                 'duration': duration,
                 'speaker': speaker,
+                'speaker_canonical': speaker,  # Task 6.2: New field
+                'speaker_role': 'other',  # Task 6.2: New field
+                'is_expert': False,  # Task 6.2: New field
                 'text': f"This is span {i+1} by {speaker}. Some sample text content.",
                 'segment_type': 'span',
             })
@@ -343,6 +349,9 @@ def create_sample_beats(
             'end_time': end,
             'duration': end - start,
             'speakers': speakers,
+            'speakers_set': list(set(speakers)) if isinstance(speakers, list) else [],  # Task 6.2: New field
+            'expert_span_ids': [],  # Task 6.2: New field
+            'expert_coverage_pct': 0.0,  # Task 6.2: New field
             'text': text,
             'segment_type': 'beat',
         })
@@ -451,6 +460,9 @@ def create_balanced_beats(
                 'end_time': current_time + duration,
                 'duration': duration,
                 'speakers': ["Alice", "Bob"],
+                'speakers_set': ["Alice", "Bob"],  # Task 6.2: New field
+                'expert_span_ids': [],  # Task 6.2: New field
+                'expert_coverage_pct': 0.0,  # Task 6.2: New field
                 'text': f"This is beat {i+1}. Some sample text content with multiple speakers.",
                 'segment_type': 'beat',
             })
@@ -745,13 +757,17 @@ def create_coverage_test_data(
         if span_duration < 10.0:
             break
         
+        speaker = 'Alice' if span_counter % 2 == 0 else 'Bob'
         spans_data.append({
             'span_id': f"{episode_id}_S{span_counter:03d}",
             'episode_id': episode_id,
             'start_time': current_time,
             'end_time': current_time + span_duration,
             'duration': span_duration,
-            'speaker': 'Alice' if span_counter % 2 == 0 else 'Bob',
+            'speaker': speaker,
+            'speaker_canonical': speaker,  # Task 6.2: New field
+            'speaker_role': 'other',  # Task 6.2: New field
+            'is_expert': False,  # Task 6.2: New field
             'text': f'Span {span_counter} content',
             'segment_type': 'span',
         })
@@ -779,6 +795,9 @@ def create_coverage_test_data(
             'end_time': overlap_target_span['start_time'] + 5.0 + overlap_span_duration,
             'duration': overlap_span_duration,
             'speaker': 'Charlie',
+            'speaker_canonical': 'Charlie',  # Task 6.2: New field
+            'speaker_role': 'other',  # Task 6.2: New field
+            'is_expert': False,  # Task 6.2: New field
             'text': 'Overlapping span content',
             'segment_type': 'span',
         })
@@ -846,6 +865,7 @@ def create_distribution_test_data(
             raise ValueError(f"Unknown distribution: {target_distribution}")
         
         current_time = i * 150.0  # Space them out
+        speaker = ['Alice', 'Bob', 'Charlie'][i % 3]
         
         spans_data.append({
             'span_id': f"{episode_id}_S{i+1:03d}",
@@ -853,7 +873,10 @@ def create_distribution_test_data(
             'start_time': current_time,
             'end_time': current_time + duration,
             'duration': duration,
-            'speaker': ['Alice', 'Bob', 'Charlie'][i % 3],
+            'speaker': speaker,
+            'speaker_canonical': speaker,  # Task 6.2: New field
+            'speaker_role': 'other',  # Task 6.2: New field
+            'is_expert': False,  # Task 6.2: New field
             'text': f'Span {i+1} content',
             'segment_type': 'span',
         })
@@ -977,7 +1000,12 @@ def create_integrity_test_data() -> pd.DataFrame:
         },
     ]
     
-    return pd.DataFrame(spans_data)
+    df = pd.DataFrame(spans_data)
+    # Task 6.2: Add new speaker metadata fields
+    df['speaker_canonical'] = df['speaker']
+    df['speaker_role'] = 'other'
+    df['is_expert'] = False
+    return df
 
 
 # ============================================================================

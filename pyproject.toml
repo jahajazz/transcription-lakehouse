@@ -65,6 +65,9 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
+markers = [
+    "integration: marks tests as integration tests (require real lakehouse data)",
+]
 
 [tool.black]
 line-length = 100

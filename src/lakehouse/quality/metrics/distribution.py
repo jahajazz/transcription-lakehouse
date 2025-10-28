@@ -189,10 +189,12 @@ def calculate_length_compliance(
     too_short_count = int(too_short.sum())
     too_long_count = int(too_long.sum())
     
-    # Calculate percentages
-    within_bounds_percent = round((within_bounds_count / total_count * 100), 2)
-    too_short_percent = round((too_short_count / total_count * 100), 2)
-    too_long_percent = round((too_long_count / total_count * 100), 2)
+    # Calculate percentages (Task 4.4: Ensure they sum to exactly 100%)
+    # Calculate first two normally, third as remainder to ensure sum = 100%
+    too_short_percent = round((too_short_count / total_count * 100), 2) if total_count > 0 else 0.0
+    within_bounds_percent = round((within_bounds_count / total_count * 100), 2) if total_count > 0 else 0.0
+    # Calculate too_long as remainder to guarantee sum = 100.0
+    too_long_percent = round(100.0 - too_short_percent - within_bounds_percent, 2)
     
     logger.info(
         f"Length compliance for {total_count} {segment_type}s "

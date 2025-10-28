@@ -443,7 +443,7 @@ class TestSectionGenerator:
     
     def test_generate_sections_basic(self, sample_beats):
         """Test basic section generation."""
-        generator = SectionGenerator()
+        generator = SectionGenerator({"require_embeddings": False})  # Task 6.2
         sections = generator.aggregate(sample_beats)
         
         assert len(sections) > 0
@@ -469,6 +469,7 @@ class TestSectionGenerator:
         generator = SectionGenerator({
             "min_duration_minutes": 3.0,
             "max_duration_minutes": 5.0,
+            "require_embeddings": False,  # Task 6.2
         })
         sections = generator.aggregate(beats)
         
@@ -480,7 +481,7 @@ class TestSectionGenerator:
     
     def test_sections_consolidate_beats(self):
         """Test that sections consolidate multiple beats."""
-        generator = SectionGenerator()
+        generator = SectionGenerator({"require_embeddings": False})  # Task 6.2
         beats = []
         for i in range(5):
             beat = {
@@ -510,7 +511,7 @@ class TestSectionGenerator:
              "duration": 360.0, "text": "Main content", "span_ids": ["s2"]},
         ]
         
-        generator = SectionGenerator({"min_duration_minutes": 1.0})
+        generator = SectionGenerator({"min_duration_minutes": 1.0, "require_embeddings": False})  # Task 6.2
         sections = generator.aggregate(beats)
         
         assert len(sections) >= 1
@@ -527,7 +528,7 @@ class TestSectionGenerator:
              "duration": 300.0, "text": "Second", "span_ids": ["s2"]},
         ]
         
-        generator = SectionGenerator({"min_duration_minutes": 1.0})
+        generator = SectionGenerator({"min_duration_minutes": 1.0, "require_embeddings": False})  # Task 6.2
         sections = generator.aggregate(beats)
         
         # Should create 2 sections due to large time gap
@@ -551,6 +552,7 @@ class TestSectionGenerator:
         generator = SectionGenerator({
             "min_duration_minutes": 5.0,
             "max_duration_minutes": 10.0,
+            "require_embeddings": False,  # Task 6.2
         })
         sections = generator.aggregate(beats)
         
@@ -576,14 +578,14 @@ class TestSectionGenerator:
             }
             beats.append(beat)
         
-        generator = SectionGenerator({"min_duration_minutes": 2.0})
+        generator = SectionGenerator({"min_duration_minutes": 2.0, "require_embeddings": False})  # Task 6.2
         sections = generator.aggregate(beats)
         
         assert len(sections) > 0
     
     def test_section_id_determinism(self, sample_beats):
         """Test that section IDs are deterministic."""
-        generator = SectionGenerator()
+        generator = SectionGenerator({"require_embeddings": False})  # Task 6.2
         
         sections1 = generator.aggregate(sample_beats)
         sections2 = generator.aggregate(sample_beats)
@@ -594,7 +596,7 @@ class TestSectionGenerator:
     
     def test_generate_sections_convenience_function(self, sample_beats):
         """Test convenience function for section generation."""
-        sections = generate_sections(sample_beats)
+        sections = generate_sections(sample_beats, config={"require_embeddings": False})  # Task 6.2
         
         assert len(sections) > 0
         assert all("section_id" in s for s in sections)
@@ -633,7 +635,7 @@ class TestAggregationStatistics:
     
     def test_section_statistics(self, sample_beats):
         """Test section statistics computation."""
-        generator = SectionGenerator()
+        generator = SectionGenerator({"require_embeddings": False})  # Task 6.2
         sections = generator.aggregate(sample_beats)
         stats = generator.compute_statistics(sections)
         
@@ -665,7 +667,7 @@ class TestAggregationPipeline:
         assert len(beats) <= len(spans)
         
         # 3. Generate sections
-        section_gen = SectionGenerator({"min_duration_minutes": 0.1})  # Low threshold for test
+        section_gen = SectionGenerator({"min_duration_minutes": 0.1, "require_embeddings": False})  # Low threshold for test (Task 6.2)
         sections = section_gen.aggregate(beats)
         assert len(sections) > 0
         assert len(sections) <= len(beats)

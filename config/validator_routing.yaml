@@ -1,0 +1,148 @@
+# Validator Routing Configuration
+# Routes quality checks to appropriate tables based on their role and schema
+#
+# This ensures text/timestamp checks only run on base tables (spans, beats)
+# and vector checks only run on embedding tables (span_embeddings, beat_embeddings)
+
+# Table role definitions and check assignments
+tables:
+  # Base tables: contain text, timestamps, and metadata
+  spans:
+    role: base
+    description: "Single-speaker contiguous segments with text and timestamps"
+    checks:
+      - coverage              # Episode coverage calculation
+      - length_buckets        # Duration distribution and compliance
+      - duplicates            # Exact and near-duplicate detection
+      - speaker_required      # Speaker field validation
+      - timestamp_order       # Monotonicity and ordering
+      - text_quality          # Text length, non-empty, etc.
+  
+  beats:
+    role: base
+    description: "Semantic meaning units composed of spans"
+    checks:
+      - length_buckets        # Duration distribution and compliance
+      - order_no_overlap      # Chronological ordering, no overlaps
+      - spans_link            # References to constituent spans
+      - timestamp_order       # Monotonicity and ordering
+      - text_quality          # Text length, non-empty, etc.
+  
+  sections:
+    role: base
+    description: "Topic-based blocks composed of beats"
+    checks:
+      - length_buckets        # Duration distribution
+      - order_no_overlap      # Chronological ordering, no overlaps
+      - beats_link            # References to constituent beats
+      - timestamp_order       # Monotonicity and ordering
+      - text_quality          # Text length, non-empty, etc.
+  
+  # Embedding tables: contain vector representations
+  span_embeddings:
+    role: embedding
+    description: "Vector embeddings for span segments"
+    checks:
+      - dim_consistency       # Embedding dimension validation
+      - id_join_back          # Join back to base table (spans)
+      - nn_leakage            # Same-speaker and same-episode neighbor analysis
+      - adjacency_bias        # Temporal adjacency in neighbors
+      - length_sim_corr       # Length vs similarity correlation
+  
+  beat_embeddings:
+    role: embedding
+    description: "Vector embeddings for beat segments"
+    checks:
+      - dim_consistency       # Embedding dimension validation
+      - id_join_back          # Join back to base table (beats)
+      - nn_leakage            # Same-speaker and same-episode neighbor analysis
+      - adjacency_bias        # Temporal adjacency in neighbors
+      - length_sim_corr       # Length vs similarity correlation
+
+# Check definitions: what each check requires
+check_requirements:
+  # Text-based checks (require 'text' column)
+  text_quality:
+    required_columns: [text]
+    table_roles: [base]
+    description: "Text length, emptiness, quality metrics"
+  
+  duplicates:
+    required_columns: [text]
+    table_roles: [base]
+    description: "Exact and near-duplicate detection"
+  
+  # Timestamp-based checks (require time columns)
+  coverage:
+    required_columns: [start_time, end_time, episode_id]
+    table_roles: [base]
+    description: "Episode coverage calculation"
+  
+  length_buckets:
+    required_columns: [duration]
+    table_roles: [base]
+    description: "Duration distribution and compliance"
+  
+  timestamp_order:
+    required_columns: [start_time, end_time]
+    table_roles: [base]
+    description: "Chronological ordering validation"
+  
+  order_no_overlap:
+    required_columns: [start_time, end_time]
+    table_roles: [base]
+    description: "No overlaps, chronological order"
+  
+  # Reference integrity checks
+  speaker_required:
+    required_columns: [speaker]
+    table_roles: [base]
+    description: "Speaker field must be present and non-empty"
+  
+  spans_link:
+    required_columns: [span_ids]
+    table_roles: [base]
+    description: "References to constituent spans"
+  
+  beats_link:
+    required_columns: [beat_ids]
+    table_roles: [base]
+    description: "References to constituent beats"
+  
+  # Vector-based checks (require 'embedding' or 'vector' column)
+  dim_consistency:
+    required_columns: [embedding]
+    table_roles: [embedding]
+    description: "Embedding dimension consistency and validity"
+  
+  id_join_back:
+    required_columns: [artifact_id]
+    table_roles: [embedding]
+    description: "Join back to base table validation"
+  
+  nn_leakage:
+    required_columns: [embedding]
+    table_roles: [embedding]
+    description: "Neighbor leakage analysis (same-speaker, same-episode)"
+  
+  adjacency_bias:
+    required_columns: [embedding]
+    table_roles: [embedding]
+    description: "Temporal adjacency bias in neighbors"
+  
+  length_sim_corr:
+    required_columns: [embedding]
+    table_roles: [embedding]
+    description: "Length-similarity correlation analysis"
+
+# Error handling behavior
+error_handling:
+  # What to do when a check is misconfigured for a table
+  misconfigured_check: fail  # Options: fail, warn, skip
+  
+  # What to do when required columns are missing for a check
+  missing_columns: skip  # Options: fail, warn, skip
+  
+  # Whether to log "not applicable" when checks are skipped
+  log_skipped_checks: true
+

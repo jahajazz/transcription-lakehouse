@@ -20,10 +20,14 @@ UTTERANCE_SCHEMA = pa.schema([
 ])
 
 # Spans Schema (single-speaker contiguous segments)
+# Task 5.1: Added speaker metadata fields (speaker_canonical, speaker_role, is_expert)
 SPAN_SCHEMA = pa.schema([
     pa.field("span_id", pa.string(), nullable=False),
     pa.field("episode_id", pa.string(), nullable=False),
     pa.field("speaker", pa.string(), nullable=False),
+    pa.field("speaker_canonical", pa.string(), nullable=False),  # Task 5.1
+    pa.field("speaker_role", pa.string(), nullable=False),       # Task 5.1
+    pa.field("is_expert", pa.bool_(), nullable=False),           # Task 5.1
     pa.field("start_time", pa.float64(), nullable=False),
     pa.field("end_time", pa.float64(), nullable=False),
     pa.field("duration", pa.float64(), nullable=False),
@@ -32,6 +36,7 @@ SPAN_SCHEMA = pa.schema([
 ])
 
 # Beats Schema (semantic meaning units)
+# Task 5.2: Added speaker metadata aggregation fields
 BEAT_SCHEMA = pa.schema([
     pa.field("beat_id", pa.string(), nullable=False),
     pa.field("episode_id", pa.string(), nullable=False),
@@ -40,6 +45,9 @@ BEAT_SCHEMA = pa.schema([
     pa.field("duration", pa.float64(), nullable=False),
     pa.field("text", pa.string(), nullable=False),
     pa.field("span_ids", pa.list_(pa.string()), nullable=False),
+    pa.field("speakers_set", pa.list_(pa.string()), nullable=False),        # Task 5.2
+    pa.field("expert_span_ids", pa.list_(pa.string()), nullable=False),     # Task 5.2
+    pa.field("expert_coverage_pct", pa.float64(), nullable=False),          # Task 5.2
     pa.field("topic_label", pa.string(), nullable=True),  # Optional
 ])
 

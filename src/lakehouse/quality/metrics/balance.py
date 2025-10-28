@@ -70,8 +70,21 @@ def calculate_speaker_distribution(
             },
         }
     
-    if 'speaker' not in segments.columns:
-        logger.error(f"speaker column not found in {segment_type}s")
+    # Determine which speaker column to use
+    # Prefer speaker_canonical (canonical/normalized names) over speaker (raw names)
+    # This ensures consistent speaker identification across episodes
+    speaker_col = None
+    if 'speaker_canonical' in segments.columns:
+        speaker_col = 'speaker_canonical'
+        logger.debug(f"Using 'speaker_canonical' column for speaker distribution")
+    elif 'speaker' in segments.columns:
+        speaker_col = 'speaker'
+        logger.debug(f"Using 'speaker' column for speaker distribution")
+    else:
+        # Note: When segments are combined (spans + beats), beats won't have speaker columns
+        # (they have 'speakers_set' instead). This is intentional - speaker balance should be
+        # calculated from spans only, as they represent individual utterances.
+        logger.debug(f"No speaker column found in {segment_type}s - skipping speaker distribution")
         return {
             'total_segments': len(segments),
             'total_speakers': 0,
@@ -99,10 +112,11 @@ def calculate_speaker_distribution(
             segments['duration'] = 0.0
     
     # Filter out segments with missing speakers
-    valid_segments = segments[segments['speaker'].notna() & (segments['speaker'] != '')]
+    # Note: This will filter out beats when spans+beats are combined, which is correct behavior
+    valid_segments = segments[segments[speaker_col].notna() & (segments[speaker_col] != '')]
     
     if len(valid_segments) == 0:
-        logger.warning(f"No valid speakers found in {segment_type}s")
+        logger.warning(f"No valid speakers found in {segment_type}s using column '{speaker_col}'")
         return {
             'total_segments': total_segments,
             'total_speakers': 0,
@@ -117,8 +131,18 @@ def calculate_speaker_distribution(
             },
         }
     
+    unique_speakers = valid_segments[speaker_col].nunique()
+    avg_segments_per_speaker = len(valid_segments) / unique_speakers if unique_speakers > 0 else 0.0
+    
+    logger.info(
+        f"Speaker distribution for {len(valid_segments)} {segment_type}s: "
+        f"{unique_speakers} unique speakers, "
+        f"top {min(top_n, unique_speakers)} account for "
+        f"{(valid_segments.groupby(speaker_col).size().nlargest(top_n).sum() / len(valid_segments) * 100):.1f}% of segments"
+    )
+    
     # Group by speaker
-    speaker_groups = valid_segments.groupby('speaker')
+    speaker_groups = valid_segments.groupby(speaker_col)
     
     speaker_stats = []
     for speaker, group in speaker_groups:
@@ -167,15 +191,17 @@ def calculate_speaker_distribution(
     total_speakers = len(speaker_stats)
     
     logger.info(
-        f"Speaker distribution for {total_segments} {segment_type}s: "
-        f"{total_speakers} unique speakers, "
+        f"Speaker distribution for {total_segments} {segment_type}s using '{speaker_col}': "
+        f"{unique_speakers} unique speakers, "
+        f"avg {avg_segments_per_speaker} segments/speaker, "
         f"top {len(top_speakers)} account for "
         f"{sum(s['segment_percent'] for s in top_speakers):.1f}% of segments"
     )
     
     return {
         'total_segments': total_segments,
-        'total_speakers': total_speakers,
+        'total_speakers': unique_speakers,  # Use calculated unique_speakers
+        'avg_segments_per_speaker': avg_segments_per_speaker,  # Use calculated avg
         'speaker_stats': speaker_stats,
         'top_speakers': top_speakers,
         'long_tail_stats': long_tail_stats,

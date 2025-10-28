@@ -12,6 +12,8 @@ import numpy as np
 from lakehouse.aggregation.base import SpanAggregator
 from lakehouse.ids import generate_beat_id
 from lakehouse.logger import get_default_logger
+from lakehouse.speaker_roles import enrich_beats_with_speaker_metadata  # Task 5.7
+from lakehouse.config import load_speaker_roles  # Task 5.7
 
 
 logger = get_default_logger()
@@ -98,6 +100,22 @@ class BeatGenerator(SpanAggregator):
             all_beats.extend(episode_beats)
             
             logger.info(f"Generated {len(episode_beats)} beats from {len(episode_spans)} spans for {episode_id}")
+        
+        # Task 5.7: Enrich beats with speaker metadata (speakers_set, expert_span_ids, expert_coverage_pct)
+        try:
+            speaker_config = load_speaker_roles()
+            all_beats = enrich_beats_with_speaker_metadata(all_beats, spans, speaker_config)
+            logger.info(f"Enriched {len(all_beats)} beats with speaker metadata")
+        except Exception as e:
+            logger.warning(f"Failed to enrich beats with speaker metadata: {e}")
+            # Add default values if enrichment fails
+            for beat in all_beats:
+                if 'speakers_set' not in beat:
+                    beat['speakers_set'] = []
+                if 'expert_span_ids' not in beat:
+                    beat['expert_span_ids'] = []
+                if 'expert_coverage_pct' not in beat:
+                    beat['expert_coverage_pct'] = 0.0
         
         # Compute and log statistics
         stats = self.compute_statistics(all_beats)

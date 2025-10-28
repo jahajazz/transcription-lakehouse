@@ -43,6 +43,72 @@ class QualityReporter:
         self.thresholds = assessment_result.thresholds
         self.violations = assessment_result.violations
         self.rag_status = assessment_result.rag_status
+        
+        # Validate consistency (Task 4.7)
+        self._validate_summary_consistency()
+    
+    def _validate_summary_consistency(self) -> None:
+        """
+        Validate that Executive Summary counts match detailed section data (Task 4.7).
+        
+        Checks:
+        - Episode count matches coverage metrics
+        - Span/beat counts match distribution metrics
+        - Embedding availability flag is consistent
+        
+        Logs warnings if inconsistencies are detected.
+        """
+        coverage = self.metrics.coverage_metrics
+        distribution = self.metrics.distribution_metrics
+        
+        if coverage:
+            global_metrics = coverage.get('global', {})
+            
+            # Validate episode count
+            coverage_episodes = global_metrics.get('total_episodes', 0)
+            if self.result.total_episodes != coverage_episodes:
+                logger.warning(
+                    f"Inconsistency: Executive Summary shows {self.result.total_episodes} episodes, "
+                    f"but coverage metrics show {coverage_episodes}"
+                )
+            
+            # Validate span count
+            coverage_spans = global_metrics.get('total_spans', 0)
+            if coverage_spans and self.result.total_spans != coverage_spans:
+                logger.warning(
+                    f"Inconsistency: Executive Summary shows {self.result.total_spans} spans, "
+                    f"but coverage metrics show {coverage_spans}"
+                )
+            
+            # Validate beat count
+            coverage_beats = global_metrics.get('total_beats', 0)
+            if coverage_beats and self.result.total_beats != coverage_beats:
+                logger.warning(
+                    f"Inconsistency: Executive Summary shows {self.result.total_beats} beats, "
+                    f"but coverage metrics show {coverage_beats}"
+                )
+        
+        # Validate span count against distribution metrics
+        if distribution:
+            span_stats = distribution.get('spans', {}).get('statistics', {})
+            if span_stats:
+                dist_span_count = span_stats.get('count', 0)
+                if dist_span_count and self.result.total_spans != dist_span_count:
+                    logger.warning(
+                        f"Inconsistency: Executive Summary shows {self.result.total_spans} spans, "
+                        f"but distribution metrics show {dist_span_count}"
+                    )
+            
+            beat_stats = distribution.get('beats', {}).get('statistics', {})
+            if beat_stats:
+                dist_beat_count = beat_stats.get('count', 0)
+                if dist_beat_count and self.result.total_beats != dist_beat_count:
+                    logger.warning(
+                        f"Inconsistency: Executive Summary shows {self.result.total_beats} beats, "
+                        f"but distribution metrics show {dist_beat_count}"
+                    )
+        
+        logger.debug("Executive Summary consistency validation complete")
     
     def generate_markdown_report(self, output_path: Path) -> None:
         """
@@ -73,6 +139,7 @@ class QualityReporter:
         sections.append(self._generate_header())
         sections.append(self.generate_executive_summary())
         sections.append(self._generate_configuration_section())
+        sections.append(self._generate_table_validation_map_section())  # Task 3.10
         sections.append(self._generate_coverage_section())
         sections.append(self._generate_distribution_section())
         sections.append(self._generate_integrity_section())
@@ -80,6 +147,7 @@ class QualityReporter:
         sections.append(self._generate_text_quality_section())
         sections.append(self._generate_embedding_section())
         sections.append(self._generate_outliers_section())
+        sections.append(self._generate_changes_in_this_run_section())  # Task 4.8, 4.9
         sections.append(self.generate_findings_and_remediation())
         sections.append(self.generate_go_nogo_recommendation())
         sections.append(self._generate_footer())
@@ -400,6 +468,62 @@ Proceeding without fixes could lead to:
         
         return section
     
+    def _generate_table_validation_map_section(self) -> str:
+        """
+        Generate table validation map section (Task 3.10).
+        
+        Shows which quality checks ran on which tables based on validator routing.
+        This helps confirm that text/timestamp checks only ran on base tables
+        and vector checks only ran on embedding tables.
+        
+        Returns:
+            Markdown formatted section
+        """
+        validation_map = self.result.validation_map
+        
+        if not validation_map or "_summary" not in validation_map:
+            return "## Table Validation Map\n\n(No validator routing information available)\n"
+        
+        section = "## Table Validation Map\n\n"
+        section += "_This section shows which quality checks were executed on each table._\n\n"
+        
+        summary = validation_map.get("_summary", {})
+        section += f"**Summary:** Assessed {summary.get('total_tables_assessed', 0)} tables "
+        section += f"with validator routing {'enabled' if summary.get('router_loaded', False) else 'disabled'}.\n\n"
+        
+        # Create table showing checks per table
+        tables_assessed = summary.get("tables_assessed", [])
+        
+        if tables_assessed:
+            section += "| Table | Role | Checks | Check Types |\n"
+            section += "|-------|------|--------|-------------|\n"
+            
+            for table_name in tables_assessed:
+                table_info = validation_map.get(table_name, {})
+                role = table_info.get("role", "unknown")
+                check_count = table_info.get("check_count", 0)
+                configured_checks = table_info.get("configured_checks", [])
+                
+                # Abbreviate check list if too long
+                if len(configured_checks) > 4:
+                    check_list = ", ".join(configured_checks[:4]) + f", ... ({len(configured_checks) - 4} more)"
+                else:
+                    check_list = ", ".join(configured_checks) if configured_checks else "none"
+                
+                section += f"| `{table_name}` | {role} | {check_count} | {check_list} |\n"
+            
+            section += "\n"
+        
+        # Add notes about routing behavior
+        section += "**Routing Behavior:**\n\n"
+        section += "- **Base tables** (spans, beats, sections): "
+        section += "Text/timestamp checks (coverage, length_buckets, duplicates, etc.)\n"
+        section += "- **Embedding tables** (span_embeddings, beat_embeddings): "
+        section += "Vector checks (dim_consistency, nn_leakage, adjacency_bias, etc.)\n"
+        section += "- This prevents spurious warnings like \"No timestamp columns found\" on embedding tables\n"
+        
+        return section
+    
     def _generate_coverage_section(self) -> str:
         """Generate coverage metrics section (FR-37, subtask 5.1.5)."""
         coverage = self.metrics.coverage_metrics
@@ -445,10 +569,10 @@ Proceeding without fixes could lead to:
             if compliance:
                 section += f"\n**Length Compliance:**\n"
                 section += f"- Within bounds (20-120s): {compliance.get('within_bounds_percent', 0):.2f}%\n"
-                section += f"- Below minimum: {compliance.get('below_min_percent', 0):.2f}%\n"
-                section += f"- Above maximum: {compliance.get('above_max_percent', 0):.2f}%\n"
+                section += f"- Below minimum: {compliance.get('too_short_percent', 0):.2f}%\n"
+                section += f"- Above maximum: {compliance.get('too_long_percent', 0):.2f}%\n"
         
-        # Beat statistics
+        # Beat statistics (Task 4.5: Show min, median, p95, max)
         beat_stats = distribution.get('beats', {}).get('statistics', {})
         if beat_stats:
             section += "\n### Beat Duration Statistics\n\n"
@@ -457,11 +581,15 @@ Proceeding without fixes could lead to:
             section += f"- Std Dev: {beat_stats.get('std', 0):.2f}s\n"
             section += f"- Min: {beat_stats.get('min', 0):.2f}s\n"
             section += f"- Max: {beat_stats.get('max', 0):.2f}s\n"
+            section += f"- P5: {beat_stats.get('p5', 0):.2f}s\n"
+            section += f"- P95: {beat_stats.get('p95', 0):.2f}s\n"
             
             compliance = distribution.get('beats', {}).get('compliance', {})
             if compliance:
                 section += f"\n**Length Compliance:**\n"
                 section += f"- Within bounds (60-180s): {compliance.get('within_bounds_percent', 0):.2f}%\n"
+                section += f"- Below minimum: {compliance.get('too_short_percent', 0):.2f}%\n"
+                section += f"- Above maximum: {compliance.get('too_long_percent', 0):.2f}%\n"
         
         return section
     
@@ -474,10 +602,29 @@ Proceeding without fixes could lead to:
         
         section = "## Category C: Ordering & Integrity Metrics\n\n"
         
-        section += f"- Timestamp Regressions: {integrity.get('timestamp_regressions', 0):,}\n"
-        section += f"- Negative Durations: {integrity.get('negative_durations', 0):,}\n"
-        section += f"- Exact Duplicates: {integrity.get('exact_duplicate_count', 0):,} ({integrity.get('exact_duplicate_percent', 0):.2f}%)\n"
-        section += f"- Near Duplicates: {integrity.get('near_duplicate_count', 0):,} ({integrity.get('near_duplicate_percent', 0):.2f}%)\n"
+        # CRITICAL FIX: Integrity metrics are now separated by table (spans vs beats)
+        # This prevents false positives from hierarchical overlap
+        # See CRITICAL_ISSUES_REMEDIATION_PLAN.md for details
+        
+        span_integrity = integrity.get('spans', {})
+        beat_integrity = integrity.get('beats', {})
+        
+        # Report span integrity
+        if span_integrity:
+            section += "**Span Integrity:**\n"
+            section += f"- Timestamp Regressions: {span_integrity.get('episode_regression_count', 0):,}\n"
+            section += f"- Negative Durations: {span_integrity.get('negative_duration_count', 0):,}\n"
+            section += f"- Exact Duplicates: {span_integrity.get('exact_duplicate_count', 0):,} ({span_integrity.get('exact_duplicate_percent', 0):.2f}%)\n"
+            section += f"- Near Duplicates: {span_integrity.get('near_duplicate_count', 0):,} ({span_integrity.get('near_duplicate_percent', 0):.2f}%)\n"
+            section += "\n"
+        
+        # Report beat integrity
+        if beat_integrity:
+            section += "**Beat Integrity:**\n"
+            section += f"- Timestamp Regressions: {beat_integrity.get('episode_regression_count', 0):,}\n"
+            section += f"- Negative Durations: {beat_integrity.get('negative_duration_count', 0):,}\n"
+            section += f"- Exact Duplicates: {beat_integrity.get('exact_duplicate_count', 0):,} ({beat_integrity.get('exact_duplicate_percent', 0):.2f}%)\n"
+            section += f"- Near Duplicates: {beat_integrity.get('near_duplicate_count', 0):,} ({beat_integrity.get('near_duplicate_percent', 0):.2f}%)\n"
         
         return section
     
@@ -490,11 +637,12 @@ Proceeding without fixes could lead to:
         
         section = "## Category D: Speaker & Series Balance\n\n"
         
-        speaker_stats = balance.get('speakers', {})
-        section += f"- Unique Speakers: {speaker_stats.get('unique_count', 0):,}\n"
-        section += f"- Segments per Speaker (avg): {speaker_stats.get('avg_segments_per_speaker', 0):.1f}\n"
+        # FIXED: Access keys directly from balance dict (no 'speakers' wrapper)
+        # Calculator returns flat structure, not nested under 'speakers' key
+        section += f"- Unique Speakers: {balance.get('total_speakers', 0):,}\n"
+        section += f"- Segments per Speaker (avg): {balance.get('avg_segments_per_speaker', 0):.1f}\n"
         
-        top_speakers = speaker_stats.get('top_speakers', [])
+        top_speakers = balance.get('top_speakers', [])
         if top_speakers:
             section += f"\n**Top {len(top_speakers)} Speakers:**\n\n"
             for speaker in top_speakers[:5]:
@@ -512,10 +660,33 @@ Proceeding without fixes could lead to:
         section = "## Category E: Text Quality Proxy Metrics\n\n"
         
         stats = text_quality.get('statistics', {})
-        section += f"- Average Token Count: {stats.get('avg_token_count', 0):.1f}\n"
-        section += f"- Average Word Count: {stats.get('avg_word_count', 0):.1f}\n"
-        section += f"- Average Character Count: {stats.get('avg_char_count', 0):.1f}\n"
-        section += f"- Average Lexical Density: {stats.get('avg_lexical_density', 0):.3f}\n"
+        section += f"- Average Token Count: {stats.get('avg_tokens', 0):.1f}\n"
+        section += f"- Average Word Count: {stats.get('avg_words', 0):.1f}\n"
+        section += f"- Average Character Count: {stats.get('avg_characters', 0):.1f}\n"
+        section += f"- Total Segments: {stats.get('total_segments', 0):,}\n"
+        
+        # Lexical density is in a separate dict
+        lexical = text_quality.get('lexical_density', {})
+        section += f"\n**Lexical Density (Content vs Stopwords):**\n"
+        section += f"- Overall Lexical Density: {lexical.get('lexical_density', 0):.3f}\n"
+        section += f"- Average per Segment: {lexical.get('avg_lexical_density', 0):.3f}\n"
+        section += f"- Content Words: {lexical.get('content_words', 0):,}\n"
+        section += f"- Stopwords: {lexical.get('stopword_count', 0):,}\n"
+        
+        # Top terms
+        top_terms = text_quality.get('top_terms', {})
+        top_unigrams = top_terms.get('top_unigrams', [])
+        top_bigrams = top_terms.get('top_bigrams', [])
+        
+        if top_unigrams:
+            section += f"\n**Top 10 Terms (unigrams, excluding stopwords):**\n"
+            for i, (term, count) in enumerate(top_unigrams[:10], 1):
+                section += f"{i}. {term}: {count:,} occurrences\n"
+        
+        if top_bigrams:
+            section += f"\n**Top 10 Bigrams:**\n"
+            for i, (bigram, count) in enumerate(top_bigrams[:10], 1):
+                section += f"{i}. \"{bigram}\": {count:,} occurrences\n"
         
         return section
     
@@ -528,31 +699,86 @@ Proceeding without fixes could lead to:
         
         section = "## Category F: Embedding Sanity Checks\n\n"
         
-        # Coherence
-        coherence = embedding.get('coherence', {})
-        if coherence:
-            section += f"### Neighbor Coherence\n\n"
-            section += f"- Assessment: {coherence.get('assessment', 'unknown')}\n"
-            section += f"- Mean Similarity: {coherence.get('mean_neighbor_similarity', 0):.3f}\n"
-            section += f"- Mean Coherence Score: {coherence.get('mean_coherence', 0):.3f}\n"
+        # Process spans and beats separately (like integrity metrics)
+        for segment_type in ['spans', 'beats']:
+            seg_metrics = embedding.get(segment_type, {})
+            if not seg_metrics:
+                continue
+            
+            section += f"### {segment_type.capitalize()} Embedding Metrics\n\n"
+            
+            # Neighbor Coherence
+            coherence = seg_metrics.get('neighbor_coherence', {})
+            if coherence:
+                section += f"**Neighbor Coherence:**\n"
+                section += f"- Assessment: {coherence.get('assessment', 'unknown')}\n"
+                section += f"- Mean Similarity: {coherence.get('mean_neighbor_similarity', 0):.3f}\n"
+                section += f"- Mean Coherence Score: {coherence.get('mean_coherence', 0):.3f}\n\n"
+            
+            # Speaker Leakage (same-speaker %)
+            speaker_leakage = seg_metrics.get('speaker_leakage', {})
+            if speaker_leakage:
+                same_speaker_pct = speaker_leakage.get('mean_same_speaker_percent', 0)
+                section += f"**Speaker Leakage:**\n"
+                section += f"- Same-Speaker %: {same_speaker_pct:.1f}%\n"
+                section += f"- Assessment: {'✓ Good' if same_speaker_pct < 30 else '✗ High leakage'}\n\n"
+            
+            # Episode Leakage (same-episode %)
+            episode_leakage = seg_metrics.get('episode_leakage', {})
+            if episode_leakage:
+                same_episode_pct = episode_leakage.get('mean_same_episode_percent', 0)
+                section += f"**Episode Leakage:**\n"
+                section += f"- Same-Episode %: {same_episode_pct:.1f}%\n"
+                section += f"- Assessment: {'✓ Good' if same_episode_pct < 50 else '✗ High leakage'}\n\n"
+            
+            # Adjacency Bias (adjacency %)
+            adjacency = seg_metrics.get('adjacency_bias', {})
+            if adjacency:
+                adj_pct = adjacency.get('mean_adjacent_percent', 0)
+                section += f"**Adjacency Bias:**\n"
+                section += f"- Adjacent Neighbors %: {adj_pct:.1f}%\n"
+                section += f"- Assessment: {'✓ Good' if adj_pct < 20 else '✗ High bias'}\n\n"
+            
+            # Length Bias (length-sim correlation)
+            length_bias = seg_metrics.get('length_bias', {})
+            if length_bias:
+                duration_corr = length_bias.get('duration_similarity_correlation', 0)
+                section += f"**Length Bias:**\n"
+                section += f"- Length-Similarity Correlation: {duration_corr:.3f}\n"
+                section += f"- Duration-Norm Correlation: {length_bias.get('duration_norm_correlation', 0):.3f}\n"
+                section += f"- Assessment: {'✓ Good' if abs(duration_corr) < 0.3 else '✗ Biased'}\n\n"
+            
+            # Similarity Correlation
+            sim_corr = seg_metrics.get('similarity_correlation', {})
+            if sim_corr:
+                corr_val = sim_corr.get('correlation', 0)
+                section += f"**Lexical-Embedding Alignment:**\n"
+                section += f"- Correlation: {corr_val:.3f}\n"
+                section += f"- Assessment: {'✓ Good' if corr_val > 0.5 else '⚠ Low alignment'}\n\n"
+            
+            # Cross-series diversity
+            cross_series = seg_metrics.get('cross_series', {})
+            if cross_series:
+                cross_pct = cross_series.get('mean_cross_series_percent', 0)
+                section += f"**Cross-Series Diversity:**\n"
+                section += f"- Cross-Series Neighbors %: {cross_pct:.1f}%\n"
+                section += f"- Assessment: {'✓ Good diversity' if cross_pct > 20 else '⚠ Low diversity'}\n\n"
         
-        # Leakage
-        speaker_leakage = embedding.get('speaker_leakage', {})
-        if speaker_leakage:
-            section += f"\n### Speaker Leakage\n\n"
-            section += f"- Mean Same-Speaker %: {speaker_leakage.get('mean_same_speaker_percent', 0):.1f}%\n"
-        
-        episode_leakage = embedding.get('episode_leakage', {})
-        if episode_leakage:
-            section += f"\n### Episode Leakage\n\n"
-            section += f"- Mean Same-Episode %: {episode_leakage.get('mean_same_episode_percent', 0):.1f}%\n"
-        
-        # Length bias
-        length_bias = embedding.get('length_bias', {})
-        if length_bias:
-            section += f"\n### Length Bias\n\n"
-            section += f"- Duration-Norm Correlation: {length_bias.get('duration_norm_correlation', 0):.3f}\n"
-            section += f"- Duration-Similarity Correlation: {length_bias.get('duration_similarity_correlation', 0):.3f}\n"
+        # Sample neighbor lists from diagnostics
+        neighbor_samples = self.metrics.diagnostics.get('neighbor_samples', [])
+        if neighbor_samples:
+            section += f"\n### Sample Neighbor Lists (Top {min(5, len(neighbor_samples))} examples)\n\n"
+            for i, sample in enumerate(neighbor_samples[:5], 1):
+                query_text = sample.get('query_text', '')[:80]
+                section += f"**{i}. Query:** \"{query_text}...\"\n"
+                section += f"   **Episode:** {sample.get('query_episode', 'unknown')}\n"
+                section += f"   **Top 3 Neighbors:**\n"
+                for j, neighbor in enumerate(sample.get('neighbors', [])[:3], 1):
+                    neighbor_text = neighbor.get('text', '')[:60]
+                    similarity = neighbor.get('similarity', 0)
+                    episode = neighbor.get('episode_id', 'unknown')
+                    section += f"   {j}. [{similarity:.3f}] (ep: {episode}) \"{neighbor_text}...\"\n"
+                section += "\n"
         
         return section
     
@@ -573,6 +799,71 @@ Proceeding without fixes could lead to:
                 section += f"### {category.replace('_', ' ').title()}\n\n"
                 section += f"Found {len(outlier_list)} outliers. "
                 section += f"See `diagnostics/outliers.csv` for details.\n\n"
+        
+        return section
+    
+    def _generate_changes_in_this_run_section(self) -> str:
+        """
+        Generate "Changes in This Run" section (Task 4.8, 4.9).
+        
+        Documents the specific improvements implemented in Fix Pack — Part-1:
+        - R1: Speaker mapping & expert flags
+        - R2: Semantic sections (topic-based blocks)
+        - R3: Validator routing (proper check routing)
+        
+        Returns:
+            Markdown formatted section describing changes
+        """
+        section = "## Changes in This Run\n\n"
+        section += "_This section documents improvements implemented in Fix Pack — Part-1 Foundations._\n\n"
+        
+        # R1: Speaker mapping & expert flags (Task 4.9)
+        section += "### R1: Speaker Metadata Enrichment\n\n"
+        section += "**Speaker roles and expert identification are now configured via `config/speaker_roles.yaml`.**\n\n"
+        section += "- **Spans** now include:\n"
+        section += "  - `speaker_canonical`: Canonical speaker name (consistent across episodes)\n"
+        section += "  - `speaker_role`: Role (expert, host, guest, other)\n"
+        section += "  - `is_expert`: Boolean flag for expert speakers\n"
+        section += "- **Beats** now include:\n"
+        section += "  - `speakers_set`: Array of all canonical speakers in the beat\n"
+        section += "  - `expert_span_ids`: IDs of spans with expert speakers\n"
+        section += "  - `expert_coverage_pct`: Percentage of beat duration with expert speech (0-100)\n\n"
+        section += "**Impact:** You can now filter, analyze, and report on expert vs. non-expert content. "
+        section += "Expert speakers are configurable without code changes.\n\n"
+        
+        # R2: Semantic sections (Task 4.9)
+        section += "### R2: Semantic Sections (Topic-Based Blocks)\n\n"
+        section += "**Sections are now generated as topic-based blocks using beat embeddings and cosine similarity.**\n\n"
+        section += "- Previously: 1 section per episode (entire episode as single block)\n"
+        section += "- Now: Multiple sections per episode based on semantic boundaries\n"
+        section += "- Configuration: `config/aggregation_config.yaml` (section parameters)\n"
+        section += "- Algorithm:\n"
+        section += "  1. Load beat embeddings (required)\n"
+        section += "  2. Detect topic changes using cosine similarity between adjacent beats\n"
+        section += "  3. Break sections at strong semantic boundaries (configurable threshold)\n"
+        section += "  4. Balance section duration with semantic coherence\n"
+        section += "- Each section includes: `section_id`, `episode_id`, `beat_ids`, `title`, `synopsis`\n\n"
+        section += "**Impact:** Sections now represent logical topic blocks rather than arbitrary time windows. "
+        section += "Useful for content navigation, topic analysis, and structured retrieval.\n\n"
+        
+        # R3: Validator routing (Task 4.9)
+        section += "### R3: Validator Routing System\n\n"
+        section += "**Quality checks are now routed to appropriate tables based on their role.**\n\n"
+        section += "- **Base tables** (spans, beats, sections): Text/timestamp checks only\n"
+        section += "  - Examples: coverage, length_buckets, duplicates, text_quality\n"
+        section += "- **Embedding tables** (span_embeddings, beat_embeddings): Vector checks only\n"
+        section += "  - Examples: dim_consistency, nn_leakage, adjacency_bias, length_sim_corr\n"
+        section += "- Configuration: `config/validator_routing.yaml`\n"
+        section += "- See \"Table Validation Map\" section above for which checks ran on which tables\n\n"
+        section += "**Impact:** Eliminates spurious warnings like \"No timestamp columns found\" on embedding tables. "
+        section += "Reports are cleaner and checks are only run where they make sense.\n\n"
+        
+        # Additional fixes
+        section += "### Additional Quality Improvements\n\n"
+        section += "- **Coverage calculation**: Now uses overlap-aware union (no more >100% coverage)\n"
+        section += "- **Length compliance buckets**: Now sum to exactly 100%\n"
+        section += "- **Duplicate detection**: Minimum text length filter (10 chars) to avoid false positives on short texts\n"
+        section += "- **Report consistency**: Statistics now match between Executive Summary and detailed sections\n\n"
         
         return section
     
@@ -704,15 +995,29 @@ def export_global_metrics_json(
             "beats": metrics.distribution_metrics.get('beats', {}),
         },
         "integrity": {
-            "timestamp_regressions": metrics.integrity_metrics.get('timestamp_regressions', 0),
-            "negative_durations": metrics.integrity_metrics.get('negative_durations', 0),
-            "exact_duplicates": {
-                "count": metrics.integrity_metrics.get('exact_duplicate_count', 0),
-                "percent": metrics.integrity_metrics.get('exact_duplicate_percent', 0.0),
+            "spans": {
+                "timestamp_regressions": metrics.integrity_metrics.get('spans', {}).get('episode_regression_count', 0),
+                "negative_durations": metrics.integrity_metrics.get('spans', {}).get('negative_duration_count', 0),
+                "exact_duplicates": {
+                    "count": metrics.integrity_metrics.get('spans', {}).get('exact_duplicate_count', 0),
+                    "percent": metrics.integrity_metrics.get('spans', {}).get('exact_duplicate_percent', 0.0),
+                },
+                "near_duplicates": {
+                    "count": metrics.integrity_metrics.get('spans', {}).get('near_duplicate_count', 0),
+                    "percent": metrics.integrity_metrics.get('spans', {}).get('near_duplicate_percent', 0.0),
+                },
             },
-            "near_duplicates": {
-                "count": metrics.integrity_metrics.get('near_duplicate_count', 0),
-                "percent": metrics.integrity_metrics.get('near_duplicate_percent', 0.0),
+            "beats": {
+                "timestamp_regressions": metrics.integrity_metrics.get('beats', {}).get('episode_regression_count', 0),
+                "negative_durations": metrics.integrity_metrics.get('beats', {}).get('negative_duration_count', 0),
+                "exact_duplicates": {
+                    "count": metrics.integrity_metrics.get('beats', {}).get('exact_duplicate_count', 0),
+                    "percent": metrics.integrity_metrics.get('beats', {}).get('exact_duplicate_percent', 0.0),
+                },
+                "near_duplicates": {
+                    "count": metrics.integrity_metrics.get('beats', {}).get('near_duplicate_count', 0),
+                    "percent": metrics.integrity_metrics.get('beats', {}).get('near_duplicate_percent', 0.0),
+                },
             },
         },
         "balance": {
